@@ -1,0 +1,20 @@
+# CP-01 (Kafka) - Pedido enviado desde Postman - 2026-10-31 15:48:59
+# POST http://localhost:3010/orders -> 202 Accepted (captura: img/00-cp01-postman-202-accepted.png)
+
+# Log de orders-api
+2026-10-31T20:48:25.000Z [orders-api] Evento OrderCreated publicado topic=orders.events partition=0 offset=15 orderId=ORD-6DF5C20B eventId=evt-9cbc090a-75a9-4508-8137-283f13f6a3ad correlationId=corr-7f8e0659-c9a0-4f85-acbb-51f795e440fa
+
+# Log de inventory-consumer
+2026-10-31T20:48:25.022Z [inventory-consumer@d75443aeae94] Evento recibido: OrderCreated orderId=ORD-6DF5C20B eventId=evt-9cbc090a-75a9-4508-8137-283f13f6a3ad correlationId=corr-7f8e0659-c9a0-4f85-acbb-51f795e440fa
+2026-10-31T20:48:25.023Z [inventory-consumer@d75443aeae94] topic=orders.events partition=0 offset=15 key=ORD-6DF5C20B
+2026-10-31T20:48:26.023Z [inventory-consumer@d75443aeae94] Inventario reservado: 1 x "Libro de arquitectura" (orderId=ORD-6DF5C20B)
+
+# Log de billing-consumer
+2026-10-31T20:48:25.022Z [billing-consumer@9831f2f5d7ef] Evento recibido: OrderCreated orderId=ORD-6DF5C20B eventId=evt-9cbc090a-75a9-4508-8137-283f13f6a3ad correlationId=corr-7f8e0659-c9a0-4f85-acbb-51f795e440fa
+2026-10-31T20:48:25.023Z [billing-consumer@9831f2f5d7ef] topic=orders.events partition=0 offset=15 key=ORD-6DF5C20B
+2026-10-31T20:48:26.024Z [billing-consumer@9831f2f5d7ef] Factura generada por $85000 (1 x $85000) (orderId=ORD-6DF5C20B)
+
+# Log de notification-consumer
+2026-10-31T20:48:25.023Z [notification-consumer@0bbb226d9b76] Evento recibido: OrderCreated orderId=ORD-6DF5C20B eventId=evt-9cbc090a-75a9-4508-8137-283f13f6a3ad correlationId=corr-7f8e0659-c9a0-4f85-acbb-51f795e440fa
+2026-10-31T20:48:25.025Z [notification-consumer@0bbb226d9b76] topic=orders.events partition=0 offset=15 key=ORD-6DF5C20B
+2026-10-31T20:48:26.025Z [notification-consumer@0bbb226d9b76] Notificación enviada a Pedro (orderId=ORD-6DF5C20B)

@@ -178,12 +178,13 @@ const casosKafka = [
     objetivo: 'Validar que el endpoint <code>POST /orders</code> recibe el pedido, lo valida y responde correctamente.',
     pre: [kafkaPre, 'Productor conectado a Kafka.'],
     datos: '<code>{"customerName":"Carlos","product":"Libro de arquitectura","quantity":1,"unitPrice":85000}</code>; casos negativos con <code>product</code> vacío y <code>quantity:-1</code>, y texto no JSON.',
-    pasos: ['Enviar el pedido válido con curl.', 'Enviar los pedidos inválidos.', 'Revisar el log de orders-api.'],
+    pasos: ['Enviar el pedido válido con curl.', 'Enviar los pedidos inválidos.', 'Revisar el log de orders-api.', 'Repetir el pedido válido desde Postman (<code>POST http://localhost:3010/orders</code>, body raw JSON) y buscar su <code>orderId</code> en los logs de orders-api y de los consumidores.'],
     esperado: 'HTTP 202 con <code>status: accepted</code> y el mensaje "Pedido recibido y evento OrderCreated publicado en Kafka"; HTTP 400 para los inválidos.',
-    obtenido: 'HTTP 202 en 0,034 s (primer envío, incluye la obtención de metadatos del tópico) con <code>orderId=ORD-702E978A</code>, <code>eventId</code> y <code>correlationId</code>. Los inválidos: HTTP 400 con los errores (incluido <code>unitPrice</code> faltante).',
+    obtenido: 'HTTP 202 en 0,034 s (primer envío, incluye la obtención de metadatos del tópico) con <code>orderId=ORD-702E978A</code>, <code>eventId</code> y <code>correlationId</code>. Los inválidos: HTTP 400 con los errores (incluido <code>unitPrice</code> faltante). Desde Postman: <code>202 Accepted</code> con <code>orderId=ORD-6DF5C20B</code>; orders-api registró la publicación en <code>partition=0 offset=15</code> y los tres consumidores reaccionaron al mismo evento.',
     estado: 'Cumple',
-    analisis: 'La API valida también <code>unitPrice</code>, que en Kafka es obligatorio para calcular el <code>total</code> del evento. El primer envío es más lento porque el productor descarga los metadatos de particiones; los siguientes tardan 5–8 ms (ver CP-07).',
-    logs: [['kafka/CP-01.txt', 'Ejecución CP-01']],
+    analisis: 'La API valida también <code>unitPrice</code>, que en Kafka es obligatorio para calcular el <code>total</code> del evento. El primer envío es más lento porque el productor descarga los metadatos de particiones; los siguientes tardan 5–8 ms (ver CP-07). El pedido de Postman se envió en una ejecución posterior (31 de octubre) sobre el mismo volumen de Kafka, por eso su offset continúa desde los eventos anteriores.',
+    imgs: [['kafka/img/00-cp01-postman-202-accepted.png', 'Postman: POST /orders responde 202 Accepted con orderId, eventId y correlationId']],
+    logs: [['kafka/CP-01.txt', 'Ejecución CP-01'], ['kafka/CP-01-postman.txt', 'Pedido de Postman en los logs de orders-api y de los consumidores']],
   },
   {
     id: 'CP-04', anchor: 'k-cp04', nombre: 'Publicación de evento en Kafka', arq: K,
@@ -511,8 +512,8 @@ curl -X POST http://localhost:3010/orders -H "Content-Type: application/json" \\
   <thead><tr><th>Ruta</th><th>Contenido</th></tr></thead>
   <tr><td><code>evidencias/rabbitmq/*.txt</code></td><td>Salida de cada caso (entorno, CP-01…CP-12) y logs completos de orders-api, notification-worker y rabbitmq.</td></tr>
   <tr><td><code>evidencias/rabbitmq/img/</code></td><td>Capturas de la consola de administración de RabbitMQ.</td></tr>
-  <tr><td><code>evidencias/kafka/*.txt</code></td><td>Salida de cada caso (entorno, CP-01…CP-12, CP-11-posterior, CP-12-analisis-lag) y logs completos de todos los servicios y del broker.</td></tr>
-  <tr><td><code>evidencias/kafka/img/</code></td><td>Capturas de Kafka UI.</td></tr>
+  <tr><td><code>evidencias/kafka/*.txt</code></td><td>Salida de cada caso (entorno, CP-01…CP-12, CP-11-posterior, CP-12-analisis-lag, CP-01-postman) y logs completos de todos los servicios y del broker.</td></tr>
+  <tr><td><code>evidencias/kafka/img/</code></td><td>Capturas de Kafka UI y de Postman (CP-01).</td></tr>
 </table>
 <p>Cada archivo de caso empieza con la fecha y hora de ejecución. Los <code>orderId</code>, <code>eventId</code> y <code>correlationId</code> citados en este documento pueden buscarse en los logs completos para verificar la trazabilidad.</p>
 </body></html>`;
