@@ -1,0 +1,70 @@
+
+==================== CP-08 Message-driven: no existe comunicación directa entre servicios ====================
+# Ejecutado: 2026-10-30 12:50:07 (hora local) / 17:50:07 UTC
+
+# Los consumidores no publican puertos; solo orders-api (3000), kafka (29092) y kafka-ui (8080)
+
+$ docker compose ps --format 'table {{.Name}}\t{{.Ports}}'
+NAME                                    PORTS
+kafka                                   0.0.0.0:29092->29092/tcp, [::]:29092->29092/tcp
+kafka-pedidos-billing-consumer-1        
+kafka-pedidos-inventory-consumer-1      
+kafka-pedidos-notification-consumer-1   
+kafka-ui                                0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+orders-api                              0.0.0.0:3010->3000/tcp, [::]:3010->3000/tcp
+
+# Sockets en escucha dentro de cada consumidor: solo 127.0.0.11 (DNS interno de Docker), no hay servidor HTTP
+
+$ docker compose exec inventory-consumer netstat -tln; echo '(fin de la lista de inventory-consumer)'
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       
+tcp        0      0 127.0.0.11:36757        0.0.0.0:*               LISTEN      
+(fin de la lista de inventory-consumer)
+
+$ docker compose exec billing-consumer netstat -tln; echo '(fin de la lista de billing-consumer)'
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       
+tcp        0      0 127.0.0.11:33923        0.0.0.0:*               LISTEN      
+(fin de la lista de billing-consumer)
+
+$ docker compose exec notification-consumer netstat -tln; echo '(fin de la lista de notification-consumer)'
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       
+tcp        0      0 127.0.0.11:45019        0.0.0.0:*               LISTEN      
+(fin de la lista de notification-consumer)
+
+# Conexiones TCP establecidas: todos hablan solo con kafka:9092
+
+$ docker inspect -f '{{.Name}} {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kafka orders-api $(docker compose ps -q inventory-consumer billing-consumer notification-consumer)
+/kafka 172.20.0.2
+/orders-api 172.20.0.7
+/kafka-pedidos-billing-consumer-1 172.20.0.5
+/kafka-pedidos-inventory-consumer-1 172.20.0.3
+/kafka-pedidos-notification-consumer-1 172.20.0.6
+
+$ docker compose exec orders-api netstat -tn | grep ESTABLISHED
+tcp        0      0 172.20.0.7:38998        172.20.0.2:9092         ESTABLISHED 
+
+$ docker compose exec inventory-consumer netstat -tn | grep ESTABLISHED
+tcp        0      0 172.20.0.3:32962        172.20.0.2:9092         ESTABLISHED 
+tcp        0      0 172.20.0.3:32976        172.20.0.2:9092         ESTABLISHED 
+
+$ docker compose exec billing-consumer netstat -tn | grep ESTABLISHED
+tcp        0      0 172.20.0.5:48568        172.20.0.2:9092         ESTABLISHED 
+tcp        0      0 172.20.0.5:48576        172.20.0.2:9092         ESTABLISHED 
+
+$ docker compose exec notification-consumer netstat -tn | grep ESTABLISHED
+tcp        0      0 172.20.0.6:57806        172.20.0.2:9092         ESTABLISHED 
+tcp        0      0 172.20.0.6:57804        172.20.0.2:9092         ESTABLISHED 
+
+# Intento de llamada HTTP directa de la API a un consumidor: debe fallar
+
+$ docker compose exec orders-api wget -q -T 3 -O- http://inventory-consumer:3000/ 2>&1 || echo 'Conexión rechazada: el consumidor no expone HTTP'
+wget: can't connect to remote host (172.20.0.3): Connection refused
+Conexión rechazada: el consumidor no expone HTTP
+
+# Revisión del código: sin llamadas HTTP salientes en la API ni servidores HTTP en los consumidores
+
+$ grep -nE 'http\.request|[^e]fetch\(|axios|createServer|listen\(' orders-api/index.js */index.js | sort -u
+orders-api/index.js:114:const server = http.createServer((req, res) => {
+orders-api/index.js:127:server.listen(PORT, () => {

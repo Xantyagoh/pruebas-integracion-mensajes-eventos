@@ -1,0 +1,32 @@
+==================== CP-12 (C) Análisis del LAG residual en inventory-service-group ====================
+# Ejecutado: 2026-10-30 13:07:16 (hora local) / 18:07:16 UTC
+
+# Estado del grupo: la partición 0 tiene offset confirmado 14 y fin de log 15
+
+GROUP                   TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                             HOST            CLIENT-ID
+inventory-service-group orders.events   0          14              15              1               inventory-consumer-321d7c6f-07e7-4a8e-8119-e61928d1cf6a /172.20.0.9     inventory-consumer
+inventory-service-group orders.events   2          9               9               0               inventory-consumer-321d7c6f-07e7-4a8e-8119-e61928d1cf6a /172.20.0.9     inventory-consumer
+inventory-service-group orders.events   1          11              11              0               inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer
+
+# La instancia a2c481ced28e sí procesó el offset 14 justo antes de que el broker se detuviera (18:00:33.497Z)
+$ docker compose logs --no-log-prefix inventory-consumer | grep -E "partition=0 offset=14|ORD-05CEDD1E|ECONNREFUSED" | head -n 5
+2026-10-30T18:00:32.332Z [inventory-consumer@a2c481ced28e] Evento recibido: OrderCreated orderId=ORD-05CEDD1E eventId=evt-0d8f0b45-f1a1-4866-869f-5dd41944c3bd correlationId=corr-6ed1e22e-14a6-4ad9-8c9
+2026-10-30T18:00:32.333Z [inventory-consumer@a2c481ced28e] topic=orders.events partition=0 offset=14 key=ORD-05CEDD1E
+2026-10-30T18:00:33.332Z [inventory-consumer@a2c481ced28e] Inventario reservado: 1 x "Producto B2" (orderId=ORD-05CEDD1E)
+{"level":"ERROR","timestamp":"2026-10-30T18:00:33.334Z","logger":"kafkajs","message":"[Connection] Connection error: connect ECONNREFUSED 172.20.0.2:9092","broker":"kafka:9092","clientId":"inventory-c
+
+# Se reinicia la instancia: retoma desde el último offset confirmado (14) y vuelve a entregar ese evento
+$ docker restart kafka-pedidos-inventory-consumer-2
+kafka-pedidos-inventory-consumer-2
+$ docker compose logs --no-log-prefix --since 2026-10-30T18:07:19Z inventory-consumer | grep -E 'Unido|Evento recibido|offset='
+2026-10-30T18:07:24.441Z [inventory-consumer@d5d9dfbc2cc6] Unido al consumer group "inventory-service-group". Particiones asignadas de orders.events: [0,2]
+2026-10-30T18:07:24.443Z [inventory-consumer@d5d9dfbc2cc6] Evento recibido: OrderCreated orderId=ORD-05CEDD1E eventId=evt-0d8f0b45-f1a1-4866-869f-5dd41944c3bd correlationId=corr-6ed1e22e-14a6-4ad9-8c94-f2013f32a276
+2026-10-30T18:07:24.443Z [inventory-consumer@d5d9dfbc2cc6] topic=orders.events partition=0 offset=14 key=ORD-05CEDD1E
+2026-10-30T18:07:24.442Z [inventory-consumer@a2c481ced28e] Unido al consumer group "inventory-service-group". Particiones asignadas de orders.events: [1]
+
+# Estado final del grupo
+
+GROUP                   TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                             HOST            CLIENT-ID
+inventory-service-group orders.events   0          15              15              0               inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer
+inventory-service-group orders.events   2          9               9               0               inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer
+inventory-service-group orders.events   1          11              11              0               inventory-consumer-fa2a13d9-fb67-421f-9671-7de579ced1ae /172.20.0.9     inventory-consumer

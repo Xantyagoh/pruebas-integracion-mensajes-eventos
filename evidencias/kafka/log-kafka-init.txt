@@ -1,0 +1,41 @@
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Created topic orders.events.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1

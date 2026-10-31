@@ -1,0 +1,119 @@
+name: kafka-pedidos
+
+x-consumer-env: &consumer-env
+  KAFKA_BROKER: kafka:9092
+  KAFKA_TOPIC: orders.events
+  PROCESSING_MS: "1000"
+
+x-after-topic: &after-topic
+  kafka-init:
+    condition: service_completed_successfully
+
+services:
+  kafka:
+    image: bitnamilegacy/kafka:3.7
+    container_name: kafka
+    ports:
+      - "29092:29092"
+    environment:
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:29092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      # El tópico se crea explícitamente (kafka-init) con 3 particiones.
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+      # Un solo broker: los tópicos internos no pueden tener réplica 3.
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+    volumes:
+      - kafka-data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 15s
+      retries: 30
+      start_period: 15s
+
+  # Contenedor de un solo uso: crea el tópico orders.events (3 particiones) y termina.
+  kafka-init:
+    image: bitnamilegacy/kafka:3.7
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists \
+          --topic orders.events --partitions 3 --replication-factor 1
+        kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic orders.events
+    restart: "no"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  orders-api:
+    build: ./orders-api
+    container_name: orders-api
+    ports:
+      - "${API_PORT:-3000}:3000"
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=orders.events
+    depends_on: *after-topic
+    restart: unless-stopped
+
+  # Consumidores: sin container_name (permite --scale) y sin puertos expuestos.
+  # Cada uno usa un consumer group distinto para que todos reciban cada OrderCreated.
+  inventory-consumer:
+    build: ./inventory-consumer
+    environment:
+      <<: *consumer-env
+      KAFKA_GROUP_ID: inventory-service-group
+    depends_on: *after-topic
+    restart: unless-stopped
+
+  billing-consumer:
+    build: ./billing-consumer
+    environment:
+      <<: *consumer-env
+      KAFKA_GROUP_ID: billing-service-group
+    depends_on: *after-topic
+    restart: unless-stopped
+
+  notification-consumer:
+    build: ./notification-consumer
+    environment:
+      <<: *consumer-env
+      KAFKA_GROUP_ID: notification-service-group
+    depends_on: *after-topic
+    restart: unless-stopped
+
+  # Consumidor "posterior": no arranca con el resto (perfil "late").
+  # Se inicia después de publicar eventos: docker compose --profile late up -d audit-consumer
+  audit-consumer:
+    build: ./audit-consumer
+    profiles: ["late"]
+    environment:
+      <<: *consumer-env
+      KAFKA_GROUP_ID: audit-service-group
+    depends_on: *after-topic
+    restart: unless-stopped
+
+volumes:
+  kafka-data:

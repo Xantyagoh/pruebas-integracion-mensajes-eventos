@@ -1,0 +1,49 @@
+
+==================== CP-05 Consumo de evento (Kafka) ====================
+# Ejecutado: 2026-10-30 12:48:10 (hora local) / 17:48:10 UTC
+
+# Cada consumidor, en su propio consumer group, recibió el mismo evento (ORD-D640D38E)
+
+$ docker compose logs --no-log-prefix inventory-consumer | grep -A 3 'orderId=ORD-D640D38E eventId' | head -n 4
+2026-10-30T17:47:58.611Z [inventory-consumer@d5d9dfbc2cc6] Evento recibido: OrderCreated orderId=ORD-D640D38E eventId=evt-349c51b4-e70b-425b-bf5c-721e1ff8ffd3 correlationId=corr-53a3066f-6c3f-423d-8f14-d767dece495b
+2026-10-30T17:47:58.611Z [inventory-consumer@d5d9dfbc2cc6] topic=orders.events partition=2 offset=0 key=ORD-D640D38E
+2026-10-30T17:47:58.611Z [inventory-consumer@d5d9dfbc2cc6] Simulando reserva de inventario...
+2026-10-30T17:47:59.611Z [inventory-consumer@d5d9dfbc2cc6] Inventario reservado: 1 x "Libro de arquitectura" (orderId=ORD-D640D38E)
+
+$ docker compose logs --no-log-prefix billing-consumer | grep -A 3 'orderId=ORD-D640D38E eventId' | head -n 4
+2026-10-30T17:47:58.610Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-D640D38E eventId=evt-349c51b4-e70b-425b-bf5c-721e1ff8ffd3 correlationId=corr-53a3066f-6c3f-423d-8f14-d767dece495b
+2026-10-30T17:47:58.610Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=0 key=ORD-D640D38E
+2026-10-30T17:47:58.611Z [billing-consumer@286de68024c8] Simulando generación de factura...
+2026-10-30T17:47:59.610Z [billing-consumer@286de68024c8] Factura generada por $85000 (1 x $85000) (orderId=ORD-D640D38E)
+
+$ docker compose logs --no-log-prefix notification-consumer | grep -A 3 'orderId=ORD-D640D38E eventId' | head -n 4
+2026-10-30T17:47:58.610Z [notification-consumer@38db5bcd9c8a] Evento recibido: OrderCreated orderId=ORD-D640D38E eventId=evt-349c51b4-e70b-425b-bf5c-721e1ff8ffd3 correlationId=corr-53a3066f-6c3f-423d-8f14-d767dece495b
+2026-10-30T17:47:58.610Z [notification-consumer@38db5bcd9c8a] topic=orders.events partition=2 offset=0 key=ORD-D640D38E
+2026-10-30T17:47:58.610Z [notification-consumer@38db5bcd9c8a] Simulando envío de notificación al cliente...
+2026-10-30T17:47:59.610Z [notification-consumer@38db5bcd9c8a] Notificación enviada a Pedro (orderId=ORD-D640D38E)
+
+# Consumer groups registrados en el broker
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --list
+console-consumer-68130
+billing-service-group
+inventory-service-group
+notification-service-group
+
+# Grupo inventory-service-group
+GROUP                   TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                             HOST            CLIENT-ID
+inventory-service-group orders.events   0          1               1               0               inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer
+inventory-service-group orders.events   1          -               0               -               inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer
+inventory-service-group orders.events   2          1               1               0               inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer
+
+# Grupo billing-service-group
+GROUP                 TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+billing-service-group orders.events   0          1               1               0               billing-consumer-fce4b9fb-5ec6-4077-9dde-885094a02779 /172.20.0.5     billing-consumer
+billing-service-group orders.events   1          -               0               -               billing-consumer-fce4b9fb-5ec6-4077-9dde-885094a02779 /172.20.0.5     billing-consumer
+billing-service-group orders.events   2          1               1               0               billing-consumer-fce4b9fb-5ec6-4077-9dde-885094a02779 /172.20.0.5     billing-consumer
+
+# Grupo notification-service-group
+GROUP                      TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                HOST            CLIENT-ID
+notification-service-group orders.events   0          1               1               0               notification-consumer-126a305a-eefe-4e5a-9513-f6b3afab2ae3 /172.20.0.6     notification-consumer
+notification-service-group orders.events   1          -               0               -               notification-consumer-126a305a-eefe-4e5a-9513-f6b3afab2ae3 /172.20.0.6     notification-consumer
+notification-service-group orders.events   2          1               1               0               notification-consumer-126a305a-eefe-4e5a-9513-f6b3afab2ae3 /172.20.0.6     notification-consumer

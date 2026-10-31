@@ -1,0 +1,28 @@
+
+==================== CP-11 Desacoplamiento temporal: el worker procesa al iniciarse ====================
+# Ejecutado: 2026-10-30 12:44:47 (hora local) / 17:44:47 UTC
+
+# Estado antes de iniciar el worker
+[cola pedidos] durable=true Ready=5 Unacked=0 Total=5 consumers=0
+
+$ docker compose start notification-worker 2>&1
+ Container rabbitmq Waiting 
+ Container rabbitmq Healthy 
+ Container rabbitmq-pedidos-notification-worker-1 Starting 
+ Container rabbitmq-pedidos-notification-worker-1 Started 
+
+# Estado después
+[cola pedidos] durable=true Ready=0 Unacked=0 Total=0 consumers=1
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:44:47Z notification-worker | grep -E 'Conectado|Mensaje recibido|ACK'
+2026-10-30T17:44:49.897Z [notification-worker@c5e91622592e] Conectado a RabbitMQ. Escuchando la cola "pedidos" (prefetch=1, ack manual, procesamiento=3000ms)
+2026-10-30T17:44:49.899Z [notification-worker@c5e91622592e] Mensaje recibido orderId=ORD-64D9F560 correlationId=corr-4d480808-1ff8-4860-84af-eb4e10f21a42 redelivered=false deliveryTag=1
+2026-10-30T17:44:52.903Z [notification-worker@c5e91622592e] Notificación enviada. ACK confirmado orderId=ORD-64D9F560 correlationId=corr-4d480808-1ff8-4860-84af-eb4e10f21a42
+2026-10-30T17:44:52.904Z [notification-worker@c5e91622592e] Mensaje recibido orderId=ORD-EA6E4A51 correlationId=corr-38c37954-8b19-48a8-a65e-4680925ae469 redelivered=false deliveryTag=2
+2026-10-30T17:44:55.908Z [notification-worker@c5e91622592e] Notificación enviada. ACK confirmado orderId=ORD-EA6E4A51 correlationId=corr-38c37954-8b19-48a8-a65e-4680925ae469
+2026-10-30T17:44:55.909Z [notification-worker@c5e91622592e] Mensaje recibido orderId=ORD-AD987C25 correlationId=corr-41e77517-13a4-4871-8d29-569d61de30ec redelivered=false deliveryTag=3
+2026-10-30T17:44:58.910Z [notification-worker@c5e91622592e] Notificación enviada. ACK confirmado orderId=ORD-AD987C25 correlationId=corr-41e77517-13a4-4871-8d29-569d61de30ec
+2026-10-30T17:44:58.911Z [notification-worker@c5e91622592e] Mensaje recibido orderId=ORD-2CF8BF57 correlationId=corr-221ceb5c-275b-4006-90e4-ebce374542ca redelivered=false deliveryTag=4
+2026-10-30T17:45:01.915Z [notification-worker@c5e91622592e] Notificación enviada. ACK confirmado orderId=ORD-2CF8BF57 correlationId=corr-221ceb5c-275b-4006-90e4-ebce374542ca
+2026-10-30T17:45:01.916Z [notification-worker@c5e91622592e] Mensaje recibido orderId=ORD-C208AFA0 correlationId=corr-fcec9a3b-6c5d-4772-9dd8-5032f6f72963 redelivered=false deliveryTag=5
+2026-10-30T17:45:04.919Z [notification-worker@c5e91622592e] Notificación enviada. ACK confirmado orderId=ORD-C208AFA0 correlationId=corr-fcec9a3b-6c5d-4772-9dd8-5032f6f72963

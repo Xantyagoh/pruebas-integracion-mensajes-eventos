@@ -1,0 +1,43 @@
+
+==================== CP-02 Envío de mensaje a RabbitMQ ====================
+# Ejecutado: 2026-10-30 12:41:02 (hora local) / 17:41:02 UTC
+
+# Se detiene el worker para que el mensaje quede visible en la cola
+
+$ docker compose stop notification-worker 2>&1
+ Container rabbitmq-pedidos-notification-worker-1 Stopping 
+ Container rabbitmq-pedidos-notification-worker-1 Stopped 
+
+# Estado antes de enviar
+[cola pedidos] durable=true Ready=0 Unacked=0 Total=0 consumers=0
+
+# Envío del pedido
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-480AC32D","correlationId":"corr-da3c71a9-fcbe-49fd-a291-a0976c6bdabc"}  -> HTTP 202 en 0.005154s
+
+# Estado después de enviar: Ready aumenta en 1
+[cola pedidos] durable=true Ready=1 Unacked=0 Total=1 consumers=0
+
+# Contenido del mensaje en la cola (lectura sin consumir: ackmode=ack_requeue_true)
+{
+  "routing_key": "pedidos",
+  "redelivered": false,
+  "properties": {
+    "app_id": "orders-api",
+    "type": "ProcessOrder",
+    "timestamp": 1793382065,
+    "message_id": "ORD-480AC32D",
+    "correlation_id": "corr-da3c71a9-fcbe-49fd-a291-a0976c6bdabc",
+    "delivery_mode": 2,
+    "headers": {},
+    "content_type": "application/json"
+  },
+  "payload": {
+    "type": "ProcessOrder",
+    "orderId": "ORD-480AC32D",
+    "correlationId": "corr-da3c71a9-fcbe-49fd-a291-a0976c6bdabc",
+    "customerName": "Pedro",
+    "product": "Libro de arquitectura",
+    "quantity": 1,
+    "createdAt": "2026-10-30T17:41:05.709Z"
+  }
+}

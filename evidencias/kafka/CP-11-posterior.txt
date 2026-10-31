@@ -1,0 +1,49 @@
+
+==================== CP-11 (B) Consumidor posterior: iniciado después de publicar los eventos, lee desde el log ====================
+# Ejecutado: 2026-10-30 12:58:33 (hora local) / 17:58:33 UTC
+
+# audit-consumer (grupo audit-service-group) no existía cuando se publicaron los eventos
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --list
+billing-service-group
+inventory-service-group
+notification-service-group
+
+# Total de eventos en el log del tópico (topic:partición:offset final):
+orders.events:0:8
+orders.events:1:5
+orders.events:2:6
+
+$ docker compose --profile late up -d audit-consumer 2>&1 | grep -E 'Created|Started'
+ Container kafka-pedidos-audit-consumer-1 Created 
+ Container kafka-init Started 
+ Container kafka-pedidos-audit-consumer-1 Started 
+
+$ docker compose logs --no-log-prefix audit-consumer | grep -E 'Unido|offset=' 
+2026-10-30T17:58:41.037Z [audit-consumer@8cd983ae13f5] Unido al consumer group "audit-service-group". Particiones asignadas de orders.events: [0,1,2]
+2026-10-30T17:58:41.056Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=2 offset=0 key=ORD-D640D38E
+2026-10-30T17:58:42.056Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=2 offset=1 key=ORD-5EC14BDC
+2026-10-30T17:58:43.056Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=2 offset=2 key=ORD-F8C14D9C
+2026-10-30T17:58:44.059Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=2 offset=3 key=ORD-2B12202C
+2026-10-30T17:58:45.059Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=2 offset=4 key=ORD-41652E7F
+2026-10-30T17:58:46.059Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=2 offset=5 key=ORD-2BAF2935
+2026-10-30T17:58:47.064Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=1 offset=0 key=ORD-296E793F
+2026-10-30T17:58:48.064Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=1 offset=1 key=ORD-11746766
+2026-10-30T17:58:49.064Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=1 offset=2 key=ORD-99EDE493
+2026-10-30T17:58:50.066Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=1 offset=3 key=ORD-6AF90985
+2026-10-30T17:58:51.066Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=1 offset=4 key=ORD-8EEC0154
+2026-10-30T17:58:52.068Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=0 key=ORD-702E978A
+2026-10-30T17:58:53.070Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=1 key=ORD-EA5FF83E
+2026-10-30T17:58:54.070Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=2 key=ORD-F16975F4
+2026-10-30T17:58:55.071Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=3 key=ORD-9B9438D9
+2026-10-30T17:58:56.072Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=4 key=ORD-087CE414
+2026-10-30T17:58:57.072Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=5 key=ORD-745BE995
+2026-10-30T17:58:58.073Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=6 key=ORD-F61A3093
+2026-10-30T17:58:59.075Z [audit-consumer@8cd983ae13f5] topic=orders.events partition=0 offset=7 key=ORD-40AECA0F
+
+$ echo "Eventos leídos por audit-consumer: $(docker compose logs --no-log-prefix audit-consumer | grep -c 'Evento recibido')"
+Eventos leídos por audit-consumer: 19
+GROUP               TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                         HOST            CLIENT-ID
+audit-service-group orders.events   0          8               8               0               audit-consumer-09382be2-368b-4359-9f43-f73017de835a /172.20.0.8     audit-consumer
+audit-service-group orders.events   1          5               5               0               audit-consumer-09382be2-368b-4359-9f43-f73017de835a /172.20.0.8     audit-consumer
+audit-service-group orders.events   2          6               6               0               audit-consumer-09382be2-368b-4359-9f43-f73017de835a /172.20.0.8     audit-consumer

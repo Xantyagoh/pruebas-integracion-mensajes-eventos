@@ -1,0 +1,41 @@
+
+==================== CP-01 Creación de pedido vía API ====================
+# Ejecutado: 2026-10-30 12:47:48 (hora local) / 17:47:48 UTC
+
+# Pedido válido
+
+$ curl -s -i -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d '{"customerName":"Carlos","product":"Libro de arquitectura","quantity":1,"unitPrice":85000}' -w '\n(tiempo total: %{time_total}s)\n'
+HTTP/1.1 202 Accepted
+Content-Type: application/json; charset=utf-8
+Date: Fri, 30 Oct 2026 17:47:48 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-702E978A","eventId":"evt-ae5a5cee-9cc2-42ea-b072-81e253581434","correlationId":"corr-77f34890-73a6-4aec-a7be-9cca34d7c8dd"}
+(tiempo total: 0.033644s)
+
+# Pedidos inválidos (validación de JSON básico)
+
+$ curl -s -i -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d '{"customerName":"Carlos","product":"","quantity":-1}'
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Date: Fri, 30 Oct 2026 17:47:48 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"rejected","errors":["product es obligatorio","quantity debe ser un entero positivo","unitPrice debe ser un número >= 0"]}
+$ curl -s -i -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d 'esto no es json'
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Date: Fri, 30 Oct 2026 17:47:49 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"rejected","errors":["JSON inválido"]}
+$ docker compose logs --no-log-prefix orders-api | tail -n 3
+2026-10-30T17:47:32.900Z [orders-api] Productor conectado a Kafka (kafka:9092). Tópico de publicación: orders.events
+2026-10-30T17:47:48.868Z [orders-api] Evento OrderCreated publicado topic=orders.events partition=0 offset=0 orderId=ORD-702E978A eventId=evt-ae5a5cee-9cc2-42ea-b072-81e253581434 correlationId=corr-77f34890-73a6-4aec-a7be-9cca34d7c8dd
+2026-10-30T17:47:48.942Z [orders-api] Pedido rechazado: product es obligatorio; quantity debe ser un entero positivo; unitPrice debe ser un número >= 0

@@ -1,0 +1,42 @@
+
+==================== CP-09 Resilient: el sistema soporta la caída de un consumidor ====================
+# Ejecutado: 2026-10-30 12:51:07 (hora local) / 17:51:07 UTC
+
+$ docker compose stop billing-consumer 2>&1
+ Container kafka-pedidos-billing-consumer-1 Stopping 
+ Container kafka-pedidos-billing-consumer-1 Stopped 
+
+$ docker compose ps --format 'table {{.Name}}\t{{.Status}}'
+NAME                                    STATUS
+kafka                                   Up 3 minutes (healthy)
+kafka-pedidos-inventory-consumer-1      Up 3 minutes
+kafka-pedidos-notification-consumer-1   Up 3 minutes
+kafka-ui                                Up 3 minutes
+orders-api                              Up 3 minutes
+
+# Con billing-consumer caído la API sigue aceptando pedidos
+Pedido 1:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-41652E7F","eventId":"evt-d14c141c-63a3-4b9f-b497-f8b55cacf9ad","correlationId":"corr-46b722b8-97de-440b-af5a-d006c2304572"}  -> HTTP 202 en 0.006118s
+Pedido 2:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-2BAF2935","eventId":"evt-b93a18ea-ed93-425e-bb93-54f1b12ddd76","correlationId":"corr-68583954-01c9-4125-81e2-5a4f2f975c46"}  -> HTTP 202 en 0.004939s
+Pedido 3:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-40AECA0F","eventId":"evt-21aa2804-73ec-48da-9067-92df12513838","correlationId":"corr-0b7e56a0-8b09-441c-810a-6c4e4d6cb070"}  -> HTTP 202 en 0.008101s
+
+$ curl -s http://localhost:3010/health; echo
+{"status":"UP","broker":"connected"}
+
+# Los demás consumidores siguen procesando normalmente
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:51:07Z inventory-consumer notification-consumer | grep -E 'Inventario reservado|Notificación enviada' | sort
+2026-10-30T17:51:10.724Z [inventory-consumer@d5d9dfbc2cc6] Inventario reservado: 1 x "Producto offline 1" (orderId=ORD-41652E7F)
+2026-10-30T17:51:10.725Z [notification-consumer@38db5bcd9c8a] Notificación enviada a SinBilling1 (orderId=ORD-41652E7F)
+2026-10-30T17:51:11.729Z [inventory-consumer@d5d9dfbc2cc6] Inventario reservado: 3 x "Producto offline 3" (orderId=ORD-40AECA0F)
+2026-10-30T17:51:11.729Z [notification-consumer@38db5bcd9c8a] Notificación enviada a SinBilling2 (orderId=ORD-2BAF2935)
+2026-10-30T17:51:12.732Z [inventory-consumer@d5d9dfbc2cc6] Inventario reservado: 2 x "Producto offline 2" (orderId=ORD-2BAF2935)
+2026-10-30T17:51:12.732Z [notification-consumer@38db5bcd9c8a] Notificación enviada a SinBilling3 (orderId=ORD-40AECA0F)
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:51:07Z billing-consumer | grep -c 'Evento recibido'
+0
+
+# El grupo de facturación no tiene miembros activos y acumula LAG (eventos pendientes en el log)
+GROUP                 TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID     HOST            CLIENT-ID
+billing-service-group orders.events   0          7               8               1               -               -               -
+billing-service-group orders.events   1          5               5               0               -               -               -
+billing-service-group orders.events   2          4               6               2               -               -               -

@@ -1,0 +1,55 @@
+{
+  "info": {
+    "name": "Pruebas de integración - Pedidos (RabbitMQ / Kafka)",
+    "description": "POST /orders contra orders-api. Cambie la variable baseUrl a http://localhost:3000 si no usa el archivo .env (API_PORT=3010).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3010" }
+  ],
+  "item": [
+    {
+      "name": "RabbitMQ - Crear pedido",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Pedro\",\n  \"product\": \"Libro de arquitectura\",\n  \"quantity\": 1\n}" },
+        "url": "{{baseUrl}}/orders"
+      }
+    },
+    {
+      "name": "Kafka - Crear pedido",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Pedro\",\n  \"product\": \"Libro de arquitectura\",\n  \"quantity\": 1,\n  \"unitPrice\": 85000\n}" },
+        "url": "{{baseUrl}}/orders"
+      }
+    },
+    {
+      "name": "Crear pedido con correlationId (CP-06)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "corr-postman-001" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Laura\",\n  \"product\": \"Curso de QA\",\n  \"quantity\": 2,\n  \"unitPrice\": 120000\n}" },
+        "url": "{{baseUrl}}/orders"
+      }
+    },
+    {
+      "name": "Pedido inválido (400)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"\",\n  \"quantity\": 0\n}" },
+        "url": "{{baseUrl}}/orders"
+      }
+    },
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    }
+  ]
+}

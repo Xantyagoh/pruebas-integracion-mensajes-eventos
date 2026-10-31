@@ -1,0 +1,26 @@
+
+==================== CP-04 Publicación de evento en Kafka ====================
+# Ejecutado: 2026-10-30 12:47:57 (hora local) / 17:47:57 UTC
+
+# Offsets del tópico antes de publicar (topic:partición:offset final)
+orders.events:0:1
+orders.events:1:0
+orders.events:2:0
+
+# Pedido
+{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-D640D38E","eventId":"evt-349c51b4-e70b-425b-bf5c-721e1ff8ffd3","correlationId":"corr-53a3066f-6c3f-423d-8f14-d767dece495b"}  -> HTTP 202 en 0.008312s
+
+# Log de orders-api: evento publicado con partición y offset
+
+$ docker compose logs --no-log-prefix orders-api | grep ORD-D640D38E
+2026-10-30T17:47:58.608Z [orders-api] Evento OrderCreated publicado topic=orders.events partition=2 offset=0 orderId=ORD-D640D38E eventId=evt-349c51b4-e70b-425b-bf5c-721e1ff8ffd3 correlationId=corr-53a3066f-6c3f-423d-8f14-d767dece495b
+
+# Offsets del tópico después de publicar: una partición avanzó en 1
+orders.events:0:1
+orders.events:1:0
+orders.events:2:1
+
+# Evento almacenado en el tópico (leído directamente del broker)
+
+$ docker exec kafka kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic orders.events --from-beginning --timeout-ms 6000 --property print.key=true --property print.partition=true --property print.offset=true 2>/dev/null | grep ORD-D640D38E
+Partition:2	Offset:0	ORD-D640D38E	{"eventId":"evt-349c51b4-e70b-425b-bf5c-721e1ff8ffd3","eventType":"OrderCreated","eventVersion":"1.0","occurredAt":"2026-10-30T17:47:58.605Z","source":"orders-api","correlationId":"corr-53a3066f-6c3f-423d-8f14-d767dece495b","data":{"orderId":"ORD-D640D38E","customerName":"Pedro","product":"Libro de arquitectura","quantity":1,"unitPrice":85000,"total":85000}}

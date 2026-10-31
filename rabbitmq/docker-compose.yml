@@ -1,0 +1,55 @@
+name: rabbitmq-pedidos
+
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq
+    # hostname fijo: RabbitMQ guarda sus datos por nombre de nodo, así la cola
+    # durable y los mensajes persistentes sobreviven a reinicios del contenedor.
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      # Plugins: consola web + rabbitmq_tracing (bitácora de mensajes del broker para trazabilidad)
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - ./20-estadisticas.conf:/etc/rabbitmq/conf.d/20-estadisticas.conf:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 15s
+
+  orders-api:
+    build: ./orders-api
+    container_name: orders-api
+    ports:
+      - "${API_PORT:-3000}:3000"
+    environment:
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - QUEUE_NAME=pedidos
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Sin container_name para poder escalar: docker compose up -d --scale notification-worker=3
+  # Sin "ports": el worker no expone HTTP, solo consume de RabbitMQ.
+  notification-worker:
+    build: ./notification-worker
+    environment:
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - QUEUE_NAME=pedidos
+      - PROCESSING_MS=3000
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  rabbitmq-data:

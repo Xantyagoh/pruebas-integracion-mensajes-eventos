@@ -1,0 +1,156 @@
+billing-consumer-1  | 2026-10-30T17:47:32.652Z [billing-consumer@286de68024c8] Iniciando consumidor
+billing-consumer-1  | 2026-10-30T17:47:32.732Z [billing-consumer@286de68024c8] Suscrito a orders.events con groupId=billing-service-group
+billing-consumer-1  | {"level":"ERROR","timestamp":"2026-10-30T17:47:32.748Z","logger":"kafkajs","message":"[Connection] Response GroupCoordinator(key: 10, version: 2)","broker":"kafka:9092","clientId":"billing-consumer","error":"The group coordinator is not available","correlationId":2,"size":55}
+billing-consumer-1  | 2026-10-30T17:47:35.022Z [billing-consumer@286de68024c8] Unido al consumer group "billing-service-group". Particiones asignadas de orders.events: [0,1,2]
+billing-consumer-1  | 2026-10-30T17:47:48.880Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-702E978A eventId=evt-ae5a5cee-9cc2-42ea-b072-81e253581434 correlationId=corr-77f34890-73a6-4aec-a7be-9cca34d7c8dd
+billing-consumer-1  | 2026-10-30T17:47:48.880Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=0 key=ORD-702E978A
+billing-consumer-1  | 2026-10-30T17:47:48.881Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:47:49.881Z [billing-consumer@286de68024c8] Factura generada por $85000 (1 x $85000) (orderId=ORD-702E978A)
+billing-consumer-1  | 2026-10-30T17:47:58.610Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-D640D38E eventId=evt-349c51b4-e70b-425b-bf5c-721e1ff8ffd3 correlationId=corr-53a3066f-6c3f-423d-8f14-d767dece495b
+billing-consumer-1  | 2026-10-30T17:47:58.610Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=0 key=ORD-D640D38E
+billing-consumer-1  | 2026-10-30T17:47:58.611Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:47:59.610Z [billing-consumer@286de68024c8] Factura generada por $85000 (1 x $85000) (orderId=ORD-D640D38E)
+billing-consumer-1  | 2026-10-30T17:49:29.274Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-296E793F eventId=evt-726d1ac0-ae11-465f-937d-e3ce02132eaf correlationId=corr-CP06-124929
+billing-consumer-1  | 2026-10-30T17:49:29.274Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=0 key=ORD-296E793F
+billing-consumer-1  | 2026-10-30T17:49:29.274Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:30.274Z [billing-consumer@286de68024c8] Factura generada por $240000 (2 x $120000) (orderId=ORD-296E793F)
+billing-consumer-1  | 2026-10-30T17:49:45.208Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-11746766 eventId=evt-fd54b50f-2f81-47d4-a7c1-39e6d6a69979 correlationId=corr-925bbef7-db8d-486b-8567-f24e31abc940
+billing-consumer-1  | 2026-10-30T17:49:45.208Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=1 key=ORD-11746766
+billing-consumer-1  | 2026-10-30T17:49:45.208Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:46.209Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-11746766)
+billing-consumer-1  | 2026-10-30T17:49:46.213Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-EA5FF83E eventId=evt-5f315924-0c08-46b4-aa53-983a58243625 correlationId=corr-40d026a1-682c-4dd6-a213-6840edec53d0
+billing-consumer-1  | 2026-10-30T17:49:46.213Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=1 key=ORD-EA5FF83E
+billing-consumer-1  | 2026-10-30T17:49:46.213Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:47.213Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-EA5FF83E)
+billing-consumer-1  | 2026-10-30T17:49:47.213Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-F16975F4 eventId=evt-bd47a8a1-905e-423f-bcea-41b8f3c6ead0 correlationId=corr-f79003a5-0f5f-4f33-a787-ca643777ee2e
+billing-consumer-1  | 2026-10-30T17:49:47.214Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=2 key=ORD-F16975F4
+billing-consumer-1  | 2026-10-30T17:49:47.214Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:48.213Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-F16975F4)
+billing-consumer-1  | 2026-10-30T17:49:48.213Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-9B9438D9 eventId=evt-3a55348e-11bb-4314-a1be-d709cd297074 correlationId=corr-e7659d5f-e6b2-4508-b9ac-a2ebf38da312
+billing-consumer-1  | 2026-10-30T17:49:48.213Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=3 key=ORD-9B9438D9
+billing-consumer-1  | 2026-10-30T17:49:48.213Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:49.213Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-9B9438D9)
+billing-consumer-1  | 2026-10-30T17:49:49.217Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-5EC14BDC eventId=evt-6cb21518-8293-4bc6-99f8-a1e15db3b9c1 correlationId=corr-52c28e8f-5aa1-42f1-ab43-76f57cfbad7f
+billing-consumer-1  | 2026-10-30T17:49:49.217Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=1 key=ORD-5EC14BDC
+billing-consumer-1  | 2026-10-30T17:49:49.217Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:50.216Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-5EC14BDC)
+billing-consumer-1  | 2026-10-30T17:49:50.216Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-F8C14D9C eventId=evt-825ec1df-164f-4aa6-98e8-fd6f13c3a365 correlationId=corr-eae02125-dd3f-46c9-8ee7-b1a92ea5add4
+billing-consumer-1  | 2026-10-30T17:49:50.217Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=2 key=ORD-F8C14D9C
+billing-consumer-1  | 2026-10-30T17:49:50.217Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:51.216Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-F8C14D9C)
+billing-consumer-1  | 2026-10-30T17:49:51.217Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-2B12202C eventId=evt-52ac87be-ae7d-471c-9226-72e99f10bad7 correlationId=corr-20961e37-28c3-4664-bb1b-8a60df9ec3a0
+billing-consumer-1  | 2026-10-30T17:49:51.217Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=3 key=ORD-2B12202C
+billing-consumer-1  | 2026-10-30T17:49:51.217Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:52.216Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-2B12202C)
+billing-consumer-1  | 2026-10-30T17:49:52.220Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-99EDE493 eventId=evt-293c3752-9165-4402-ac44-2f67afe90dc9 correlationId=corr-72926886-4dc5-4864-9d1b-b95a858647d8
+billing-consumer-1  | 2026-10-30T17:49:52.220Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=2 key=ORD-99EDE493
+billing-consumer-1  | 2026-10-30T17:49:52.220Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:53.220Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-99EDE493)
+billing-consumer-1  | 2026-10-30T17:49:53.221Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-6AF90985 eventId=evt-1458416b-f480-4995-8ff2-78de9185373c correlationId=corr-9c9a3852-331d-4d6d-9cdf-7443d0c35af7
+billing-consumer-1  | 2026-10-30T17:49:53.221Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=3 key=ORD-6AF90985
+billing-consumer-1  | 2026-10-30T17:49:53.221Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:54.220Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-6AF90985)
+billing-consumer-1  | 2026-10-30T17:49:54.220Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-8EEC0154 eventId=evt-24ce7e8e-a83a-4a3b-b6a7-37186334f060 correlationId=corr-c817d9bc-2eb4-4e34-bb7a-6d6acbd874be
+billing-consumer-1  | 2026-10-30T17:49:54.220Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=4 key=ORD-8EEC0154
+billing-consumer-1  | 2026-10-30T17:49:54.220Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:49:55.221Z [billing-consumer@286de68024c8] Factura generada por $10000 (1 x $10000) (orderId=ORD-8EEC0154)
+billing-consumer-1  | 2026-10-30T17:50:20.840Z [billing-consumer@286de68024c8] SIGTERM recibido, abandonando el consumer group
+billing-consumer-1  | 2026-10-30T17:51:00.680Z [billing-consumer@286de68024c8] Iniciando consumidor
+billing-consumer-1  | 2026-10-30T17:51:00.718Z [billing-consumer@286de68024c8] Suscrito a orders.events con groupId=billing-service-group
+billing-consumer-1  | 2026-10-30T17:51:00.733Z [billing-consumer@286de68024c8] Unido al consumer group "billing-service-group". Particiones asignadas de orders.events: [0,1,2]
+billing-consumer-1  | 2026-10-30T17:51:00.747Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-087CE414 eventId=evt-933ff7e1-768e-4593-af6e-5571ec3ae620 correlationId=corr-15558858-271c-4c8c-a7ce-e19fec85d4b3
+billing-consumer-1  | 2026-10-30T17:51:00.748Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=4 key=ORD-087CE414
+billing-consumer-1  | 2026-10-30T17:51:00.748Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:51:01.748Z [billing-consumer@286de68024c8] Factura generada por $50000 (1 x $50000) (orderId=ORD-087CE414)
+billing-consumer-1  | 2026-10-30T17:51:01.748Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-745BE995 eventId=evt-4c882e17-3212-4489-8d9f-b326b2477b77 correlationId=corr-ae2383a8-0cb5-4edb-b0aa-ee1bd02dfc65
+billing-consumer-1  | 2026-10-30T17:51:01.748Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=5 key=ORD-745BE995
+billing-consumer-1  | 2026-10-30T17:51:01.748Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:51:02.749Z [billing-consumer@286de68024c8] Factura generada por $100000 (2 x $50000) (orderId=ORD-745BE995)
+billing-consumer-1  | 2026-10-30T17:51:02.749Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-F61A3093 eventId=evt-e331e0fb-2ea1-4d8c-9655-64befc3f1e48 correlationId=corr-bdacb967-7d2b-49a8-9033-1162d9fb17cc
+billing-consumer-1  | 2026-10-30T17:51:02.749Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=6 key=ORD-F61A3093
+billing-consumer-1  | 2026-10-30T17:51:02.749Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:51:03.749Z [billing-consumer@286de68024c8] Factura generada por $150000 (3 x $50000) (orderId=ORD-F61A3093)
+billing-consumer-1  | 2026-10-30T17:51:07.825Z [billing-consumer@286de68024c8] SIGTERM recibido, abandonando el consumer group
+billing-consumer-1  | 2026-10-30T17:51:45.724Z [billing-consumer@286de68024c8] Iniciando consumidor
+billing-consumer-1  | 2026-10-30T17:51:45.762Z [billing-consumer@286de68024c8] Suscrito a orders.events con groupId=billing-service-group
+billing-consumer-1  | 2026-10-30T17:51:45.778Z [billing-consumer@286de68024c8] Unido al consumer group "billing-service-group". Particiones asignadas de orders.events: [0,1,2]
+billing-consumer-1  | 2026-10-30T17:51:45.791Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-40AECA0F eventId=evt-21aa2804-73ec-48da-9067-92df12513838 correlationId=corr-0b7e56a0-8b09-441c-810a-6c4e4d6cb070
+billing-consumer-1  | 2026-10-30T17:51:45.791Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=7 key=ORD-40AECA0F
+billing-consumer-1  | 2026-10-30T17:51:45.791Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:51:46.791Z [billing-consumer@286de68024c8] Factura generada por $150000 (3 x $50000) (orderId=ORD-40AECA0F)
+billing-consumer-1  | 2026-10-30T17:51:46.795Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-41652E7F eventId=evt-d14c141c-63a3-4b9f-b497-f8b55cacf9ad correlationId=corr-46b722b8-97de-440b-af5a-d006c2304572
+billing-consumer-1  | 2026-10-30T17:51:46.796Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=4 key=ORD-41652E7F
+billing-consumer-1  | 2026-10-30T17:51:46.796Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:51:47.794Z [billing-consumer@286de68024c8] Factura generada por $50000 (1 x $50000) (orderId=ORD-41652E7F)
+billing-consumer-1  | 2026-10-30T17:51:47.794Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-2BAF2935 eventId=evt-b93a18ea-ed93-425e-bb93-54f1b12ddd76 correlationId=corr-68583954-01c9-4125-81e2-5a4f2f975c46
+billing-consumer-1  | 2026-10-30T17:51:47.795Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=5 key=ORD-2BAF2935
+billing-consumer-1  | 2026-10-30T17:51:47.795Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:51:48.795Z [billing-consumer@286de68024c8] Factura generada por $100000 (2 x $50000) (orderId=ORD-2BAF2935)
+billing-consumer-1  | 2026-10-30T17:59:24.530Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-F8F5CCA3 eventId=evt-1cabcf57-daf8-4f62-9730-ca25ef2e0c8f correlationId=corr-7ec9e852-e83d-41f2-bc98-70d255ffe66c
+billing-consumer-1  | 2026-10-30T17:59:24.530Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=8 key=ORD-F8F5CCA3
+billing-consumer-1  | 2026-10-30T17:59:24.530Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:25.531Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-F8F5CCA3)
+billing-consumer-1  | 2026-10-30T17:59:25.534Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-C4CFA81A eventId=evt-4d3c8d2b-a31b-4934-afae-f6425d70b74d correlationId=corr-24f6e894-5481-4901-b224-a0d1e805c7bf
+billing-consumer-1  | 2026-10-30T17:59:25.535Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=5 key=ORD-C4CFA81A
+billing-consumer-1  | 2026-10-30T17:59:25.535Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:26.535Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-C4CFA81A)
+billing-consumer-1  | 2026-10-30T17:59:26.535Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-7F0D2378 eventId=evt-193bfd8e-7ce0-46d8-b64c-1cbcc45e626a correlationId=corr-3222939e-c912-4b7c-96ae-8dca8e61d63c
+billing-consumer-1  | 2026-10-30T17:59:26.535Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=6 key=ORD-7F0D2378
+billing-consumer-1  | 2026-10-30T17:59:26.535Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:27.536Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-7F0D2378)
+billing-consumer-1  | 2026-10-30T17:59:27.538Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-64C15D6E eventId=evt-5307edfa-398d-4a55-8bda-ec16cdcc8287 correlationId=corr-46540780-1c41-4fd8-b72d-7b2aaf83ac74
+billing-consumer-1  | 2026-10-30T17:59:27.538Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=7 key=ORD-64C15D6E
+billing-consumer-1  | 2026-10-30T17:59:27.538Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:28.538Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-64C15D6E)
+billing-consumer-1  | 2026-10-30T17:59:28.538Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-24C0B7FB eventId=evt-db87ceb5-4681-40ee-bcf9-15b886d4006b correlationId=corr-1f3999f6-7dc8-45fd-b600-180a5b8fd3e9
+billing-consumer-1  | 2026-10-30T17:59:28.538Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=8 key=ORD-24C0B7FB
+billing-consumer-1  | 2026-10-30T17:59:28.538Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:29.539Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-24C0B7FB)
+billing-consumer-1  | 2026-10-30T17:59:29.540Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-9A0DEF8E eventId=evt-18a28828-40d9-4f16-8ddd-9b73e8f1929d correlationId=corr-cb51dc80-d54b-478b-8626-c3dfd6c2b8ca
+billing-consumer-1  | 2026-10-30T17:59:29.540Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=9 key=ORD-9A0DEF8E
+billing-consumer-1  | 2026-10-30T17:59:29.540Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:30.540Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-9A0DEF8E)
+billing-consumer-1  | 2026-10-30T17:59:30.541Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-86B0E479 eventId=evt-0f2c6818-8544-4887-a5a0-a06b69c873a0 correlationId=corr-b6c92637-ffdd-4912-b888-e13b3a6a0cc5
+billing-consumer-1  | 2026-10-30T17:59:30.541Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=10 key=ORD-86B0E479
+billing-consumer-1  | 2026-10-30T17:59:30.541Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:31.542Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-86B0E479)
+billing-consumer-1  | 2026-10-30T17:59:31.542Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-4FE785C9 eventId=evt-d3bb7178-de0d-46ba-9b3d-9d6c422b4af2 correlationId=corr-a93f2233-25ce-4fc1-af0b-9ba69c7f9c24
+billing-consumer-1  | 2026-10-30T17:59:31.542Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=11 key=ORD-4FE785C9
+billing-consumer-1  | 2026-10-30T17:59:31.542Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:32.543Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-4FE785C9)
+billing-consumer-1  | 2026-10-30T17:59:32.545Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-0A46DCA1 eventId=evt-da2f2140-0ce9-4638-9a2d-a2f30118b4cb correlationId=corr-cd7073aa-7acb-4048-9c94-9bc986254dc8
+billing-consumer-1  | 2026-10-30T17:59:32.545Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=6 key=ORD-0A46DCA1
+billing-consumer-1  | 2026-10-30T17:59:32.545Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:33.545Z [billing-consumer@286de68024c8] Factura generada por $1000 (1 x $1000) (orderId=ORD-0A46DCA1)
+billing-consumer-1  | 2026-10-30T17:59:56.252Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-1114F872 eventId=evt-e4ae1539-6735-4c50-adee-ff7e7ee0f131 correlationId=corr-2cebb4c0-e2bb-4dd6-98ac-633067526580
+billing-consumer-1  | 2026-10-30T17:59:56.252Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=7 key=ORD-1114F872
+billing-consumer-1  | 2026-10-30T17:59:56.252Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:57.252Z [billing-consumer@286de68024c8] Factura generada por $2000 (1 x $2000) (orderId=ORD-1114F872)
+billing-consumer-1  | 2026-10-30T17:59:57.255Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-B642EFB1 eventId=evt-36200661-17a8-4a5e-848f-eb2fc03575bd correlationId=corr-4fe26336-ba8f-428f-9141-6611edee9a08
+billing-consumer-1  | 2026-10-30T17:59:57.255Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=8 key=ORD-B642EFB1
+billing-consumer-1  | 2026-10-30T17:59:57.255Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:58.256Z [billing-consumer@286de68024c8] Factura generada por $2000 (1 x $2000) (orderId=ORD-B642EFB1)
+billing-consumer-1  | 2026-10-30T17:59:58.257Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-F6E620BE eventId=evt-7f38c655-b9f4-4435-ac1a-67fab26ffb2c correlationId=corr-8fee9323-c8e0-4327-b5ae-efa329060997
+billing-consumer-1  | 2026-10-30T17:59:58.257Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=12 key=ORD-F6E620BE
+billing-consumer-1  | 2026-10-30T17:59:58.257Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T17:59:59.257Z [billing-consumer@286de68024c8] Factura generada por $2000 (1 x $2000) (orderId=ORD-F6E620BE)
+billing-consumer-1  | 2026-10-30T18:00:29.832Z [billing-consumer@286de68024c8] SIGTERM recibido, abandonando el consumer group
+billing-consumer-1  | 2026-10-30T18:00:52.186Z [billing-consumer@286de68024c8] Iniciando consumidor
+billing-consumer-1  | 2026-10-30T18:00:52.226Z [billing-consumer@286de68024c8] Suscrito a orders.events con groupId=billing-service-group
+billing-consumer-1  | 2026-10-30T18:01:09.225Z [billing-consumer@286de68024c8] Unido al consumer group "billing-service-group". Particiones asignadas de orders.events: [0,1,2]
+billing-consumer-1  | 2026-10-30T18:01:09.248Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-103609A4 eventId=evt-062d3503-43ea-4a37-bf60-9e8484912151 correlationId=corr-31521dc2-d866-44eb-ae99-750804b12484
+billing-consumer-1  | 2026-10-30T18:01:09.248Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=9 key=ORD-103609A4
+billing-consumer-1  | 2026-10-30T18:01:09.248Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T18:01:10.249Z [billing-consumer@286de68024c8] Factura generada por $3000 (1 x $3000) (orderId=ORD-103609A4)
+billing-consumer-1  | 2026-10-30T18:01:10.251Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-8034DC94 eventId=evt-3e0de9a7-e47e-4a96-9410-06fac8caeeea correlationId=corr-e0ae2127-35b2-4c7d-98e8-e8d299168e7f
+billing-consumer-1  | 2026-10-30T18:01:10.252Z [billing-consumer@286de68024c8] topic=orders.events partition=1 offset=10 key=ORD-8034DC94
+billing-consumer-1  | 2026-10-30T18:01:10.252Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T18:01:11.252Z [billing-consumer@286de68024c8] Factura generada por $3000 (1 x $3000) (orderId=ORD-8034DC94)
+billing-consumer-1  | 2026-10-30T18:01:11.257Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-B6DE9271 eventId=evt-9eb03633-fc54-4ca7-97b7-54be0b7acb18 correlationId=corr-665e14be-4451-4417-841d-5eaf70e9ce35
+billing-consumer-1  | 2026-10-30T18:01:11.258Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=13 key=ORD-B6DE9271
+billing-consumer-1  | 2026-10-30T18:01:11.258Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T18:01:12.257Z [billing-consumer@286de68024c8] Factura generada por $3000 (1 x $3000) (orderId=ORD-B6DE9271)
+billing-consumer-1  | 2026-10-30T18:01:12.257Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-05CEDD1E eventId=evt-0d8f0b45-f1a1-4866-869f-5dd41944c3bd correlationId=corr-6ed1e22e-14a6-4ad9-8c94-f2013f32a276
+billing-consumer-1  | 2026-10-30T18:01:12.257Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=14 key=ORD-05CEDD1E
+billing-consumer-1  | 2026-10-30T18:01:12.257Z [billing-consumer@286de68024c8] Simulando generación de factura...
+billing-consumer-1  | 2026-10-30T18:01:13.257Z [billing-consumer@286de68024c8] Factura generada por $3000 (1 x $3000) (orderId=ORD-05CEDD1E)

@@ -1,0 +1,45 @@
+
+==================== CP-10 Elastic: distribución de carga con varias instancias del mismo grupo ====================
+# Ejecutado: 2026-10-30 12:59:09 (hora local) / 17:59:09 UTC
+
+$ docker compose up -d --scale inventory-consumer=2 2>&1 | grep -E 'Started|Running' | grep inventory
+ Container kafka-pedidos-inventory-consumer-1 Running 
+ Container kafka-pedidos-inventory-consumer-2 Started 
+
+$ docker compose ps inventory-consumer --format 'table {{.Name}}\t{{.Status}}'
+NAME                                 STATUS
+kafka-pedidos-inventory-consumer-1   Up 11 minutes
+kafka-pedidos-inventory-consumer-2   Up 8 seconds
+
+# Particiones repartidas entre las 2 instancias del grupo inventory-service-group
+GROUP                   CONSUMER-ID                                             HOST            CLIENT-ID          #PARTITIONS     
+inventory-service-group inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer 1               
+inventory-service-group inventory-consumer-321d7c6f-07e7-4a8e-8119-e61928d1cf6a /172.20.0.9     inventory-consumer 2               
+
+# Se envían 9 pedidos (cada uno con su propia key = orderId)
+Pedido 1:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-F8F5CCA3","eventId":"evt-1cabcf57-daf8-4f62-9730-ca25ef2e0c8f","correlationId":"corr-7ec9e852-e83d-41f2-bc98-70d255ffe66c"}  -> HTTP 202 en 0.007800s
+Pedido 2:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-0A46DCA1","eventId":"evt-da2f2140-0ce9-4638-9a2d-a2f30118b4cb","correlationId":"corr-cd7073aa-7acb-4048-9c94-9bc986254dc8"}  -> HTTP 202 en 0.005156s
+Pedido 3:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-C4CFA81A","eventId":"evt-4d3c8d2b-a31b-4934-afae-f6425d70b74d","correlationId":"corr-24f6e894-5481-4901-b224-a0d1e805c7bf"}  -> HTTP 202 en 0.004919s
+Pedido 4:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-7F0D2378","eventId":"evt-193bfd8e-7ce0-46d8-b64c-1cbcc45e626a","correlationId":"corr-3222939e-c912-4b7c-96ae-8dca8e61d63c"}  -> HTTP 202 en 0.004705s
+Pedido 5:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-9A0DEF8E","eventId":"evt-18a28828-40d9-4f16-8ddd-9b73e8f1929d","correlationId":"corr-cb51dc80-d54b-478b-8626-c3dfd6c2b8ca"}  -> HTTP 202 en 0.004493s
+Pedido 6:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-64C15D6E","eventId":"evt-5307edfa-398d-4a55-8bda-ec16cdcc8287","correlationId":"corr-46540780-1c41-4fd8-b72d-7b2aaf83ac74"}  -> HTTP 202 en 0.004548s
+Pedido 7:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-24C0B7FB","eventId":"evt-db87ceb5-4681-40ee-bcf9-15b886d4006b","correlationId":"corr-1f3999f6-7dc8-45fd-b600-180a5b8fd3e9"}  -> HTTP 202 en 0.004660s
+Pedido 8:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-86B0E479","eventId":"evt-0f2c6818-8544-4887-a5a0-a06b69c873a0","correlationId":"corr-b6c92637-ffdd-4912-b888-e13b3a6a0cc5"}  -> HTTP 202 en 0.004641s
+Pedido 9:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-4FE785C9","eventId":"evt-d3bb7178-de0d-46ba-9b3d-9d6c422b4af2","correlationId":"corr-a93f2233-25ce-4fc1-af0b-9ba69c7f9c24"}  -> HTTP 202 en 0.004649s
+
+# Eventos procesados por cada instancia (instancia, partición)
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:59:24Z inventory-consumer | grep 'topic=' | sed -E 's/.*\[(inventory-consumer@[a-f0-9]+)\].*partition=([0-9]+).*/\1 partición \2/' | sort | uniq -c
+      4 inventory-consumer@a2c481ced28e partición 0
+      1 inventory-consumer@a2c481ced28e partición 2
+      4 inventory-consumer@d5d9dfbc2cc6 partición 1
+
+# Los demás grupos (billing, notification) recibieron los 9 eventos completos
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:59:24Z billing-consumer | grep -c 'Evento recibido'; docker compose logs --no-log-prefix --since 2026-10-30T17:59:24Z notification-consumer | grep -c 'Evento recibido'
+9
+9
+GROUP                   TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                             HOST            CLIENT-ID
+inventory-service-group orders.events   0          12              12              0               inventory-consumer-321d7c6f-07e7-4a8e-8119-e61928d1cf6a /172.20.0.9     inventory-consumer
+inventory-service-group orders.events   2          7               7               0               inventory-consumer-321d7c6f-07e7-4a8e-8119-e61928d1cf6a /172.20.0.9     inventory-consumer
+inventory-service-group orders.events   1          9               9               0               inventory-consumer-6103019b-0c4b-42f3-923e-00096f3390bf /172.20.0.3     inventory-consumer

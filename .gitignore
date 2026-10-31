@@ -1,0 +1,6 @@
+node_modules/
+.playwright-mcp/
+# Generado por informe/generar-informe.js (las evidencias ya están en evidencias/)
+informe/informe.html
+# Copia empaquetada del repositorio para la entrega en Teams
+*.zip

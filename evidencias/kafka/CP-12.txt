@@ -1,0 +1,89 @@
+
+==================== CP-12 Recuperación tras reinicio del consumidor y del broker ====================
+# Ejecutado: 2026-10-30 12:59:55 (hora local) / 17:59:55 UTC
+
+# A) Caída abrupta (SIGKILL) de notification-consumer
+
+$ docker kill $(docker compose ps -q notification-consumer)
+38db5bcd9c8ac61d8f5adfbc431089786fc9e8a30f913443674e32339f3b0602
+Pedido 1:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-1114F872","eventId":"evt-e4ae1539-6735-4c50-adee-ff7e7ee0f131","correlationId":"corr-2cebb4c0-e2bb-4dd6-98ac-633067526580"}  -> HTTP 202 en 0.005357s
+Pedido 2:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-B642EFB1","eventId":"evt-36200661-17a8-4a5e-848f-eb2fc03575bd","correlationId":"corr-4fe26336-ba8f-428f-9141-6611edee9a08"}  -> HTTP 202 en 0.004711s
+Pedido 3:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-F6E620BE","eventId":"evt-7f38c655-b9f4-4435-ac1a-67fab26ffb2c","correlationId":"corr-8fee9323-c8e0-4327-b5ae-efa329060997"}  -> HTTP 202 en 0.004635s
+
+# Eventos pendientes para el grupo de notificaciones
+GROUP                      TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                HOST            CLIENT-ID
+notification-service-group orders.events   0          12              13              1               notification-consumer-126a305a-eefe-4e5a-9513-f6b3afab2ae3 /172.20.0.6     notification-consumer
+notification-service-group orders.events   1          9               9               0               notification-consumer-126a305a-eefe-4e5a-9513-f6b3afab2ae3 /172.20.0.6     notification-consumer
+notification-service-group orders.events   2          7               9               2               notification-consumer-126a305a-eefe-4e5a-9513-f6b3afab2ae3 /172.20.0.6     notification-consumer
+
+$ docker compose up -d notification-consumer 2>&1 | tail -n 1
+ Container kafka-pedidos-notification-consumer-1 Started 
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:59:57Z notification-consumer | grep -E 'Unido|Evento recibido|offset=' 
+2026-10-30T18:00:23.557Z [notification-consumer@38db5bcd9c8a] Unido al consumer group "notification-service-group". Particiones asignadas de orders.events: [0,1,2]
+2026-10-30T18:00:23.573Z [notification-consumer@38db5bcd9c8a] Evento recibido: OrderCreated orderId=ORD-1114F872 eventId=evt-e4ae1539-6735-4c50-adee-ff7e7ee0f131 correlationId=corr-2cebb4c0-e2bb-4dd6-98ac-633067526580
+2026-10-30T18:00:23.573Z [notification-consumer@38db5bcd9c8a] topic=orders.events partition=2 offset=7 key=ORD-1114F872
+2026-10-30T18:00:24.576Z [notification-consumer@38db5bcd9c8a] Evento recibido: OrderCreated orderId=ORD-B642EFB1 eventId=evt-36200661-17a8-4a5e-848f-eb2fc03575bd correlationId=corr-4fe26336-ba8f-428f-9141-6611edee9a08
+2026-10-30T18:00:24.576Z [notification-consumer@38db5bcd9c8a] topic=orders.events partition=2 offset=8 key=ORD-B642EFB1
+2026-10-30T18:00:25.581Z [notification-consumer@38db5bcd9c8a] Evento recibido: OrderCreated orderId=ORD-F6E620BE eventId=evt-7f38c655-b9f4-4435-ac1a-67fab26ffb2c correlationId=corr-8fee9323-c8e0-4327-b5ae-efa329060997
+2026-10-30T18:00:25.581Z [notification-consumer@38db5bcd9c8a] topic=orders.events partition=0 offset=12 key=ORD-F6E620BE
+GROUP                      TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                HOST            CLIENT-ID
+notification-service-group orders.events   0          13              13              0               notification-consumer-8d926066-863b-406c-86e3-abe13fe9884b /172.20.0.6     notification-consumer
+notification-service-group orders.events   1          9               9               0               notification-consumer-8d926066-863b-406c-86e3-abe13fe9884b /172.20.0.6     notification-consumer
+notification-service-group orders.events   2          9               9               0               notification-consumer-8d926066-863b-406c-86e3-abe13fe9884b /172.20.0.6     notification-consumer
+
+# B) Reinicio del broker con eventos pendientes para billing-consumer
+
+$ docker compose stop billing-consumer 2>&1
+ Container kafka-pedidos-billing-consumer-1 Stopping 
+ Container kafka-pedidos-billing-consumer-1 Stopped 
+Pedido 1:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-B6DE9271","eventId":"evt-9eb03633-fc54-4ca7-97b7-54be0b7acb18","correlationId":"corr-665e14be-4451-4417-841d-5eaf70e9ce35"}  -> HTTP 202 en 0.004678s
+Pedido 2:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-05CEDD1E","eventId":"evt-0d8f0b45-f1a1-4866-869f-5dd41944c3bd","correlationId":"corr-6ed1e22e-14a6-4ad9-8c94-f2013f32a276"}  -> HTTP 202 en 0.004131s
+Pedido 3:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-103609A4","eventId":"evt-062d3503-43ea-4a37-bf60-9e8484912151","correlationId":"corr-31521dc2-d866-44eb-ae99-750804b12484"}  -> HTTP 202 en 0.004450s
+
+# Offsets del tópico antes del reinicio
+orders.events:0:15
+orders.events:1:10
+orders.events:2:9
+
+$ docker compose restart kafka 2>&1
+ Container kafka Restarting 
+ Container kafka Started 
+
+# Offsets del tópico después del reinicio: el log se conservó
+orders.events:0:15
+orders.events:1:10
+orders.events:2:9
+
+# Offsets confirmados del grupo de facturación tras el reinicio (eventos pendientes intactos)
+GROUP                 TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+billing-service-group orders.events   0          13              15              2               billing-consumer-7a329260-427a-40a3-b824-eea7e5a3f3d2 /172.20.0.5     billing-consumer
+billing-service-group orders.events   1          9               10              1               billing-consumer-7a329260-427a-40a3-b824-eea7e5a3f3d2 /172.20.0.5     billing-consumer
+billing-service-group orders.events   2          9               9               0               billing-consumer-7a329260-427a-40a3-b824-eea7e5a3f3d2 /172.20.0.5     billing-consumer
+
+# La API sigue publicando después del reinicio
+Pedido 4:{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-8034DC94","eventId":"evt-3e0de9a7-e47e-4a96-9410-06fac8caeeea","correlationId":"corr-e0ae2127-35b2-4c7d-98e8-e8d299168e7f"}  -> HTTP 202 en 0.011473s
+
+$ docker compose start billing-consumer 2>&1
+ Container kafka Waiting 
+ Container kafka Healthy 
+ Container kafka-init Starting 
+ Container kafka-init Started 
+ Container kafka-init Waiting 
+ Container kafka-init Exited 
+ Container kafka-pedidos-billing-consumer-1 Starting 
+ Container kafka-pedidos-billing-consumer-1 Started 
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T18:00:48Z billing-consumer | grep -E 'Unido|Evento recibido'
+2026-10-30T18:01:09.225Z [billing-consumer@286de68024c8] Unido al consumer group "billing-service-group". Particiones asignadas de orders.events: [0,1,2]
+2026-10-30T18:01:09.248Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-103609A4 eventId=evt-062d3503-43ea-4a37-bf60-9e8484912151 correlationId=corr-31521dc2-d866-44eb-ae99-750804b12484
+2026-10-30T18:01:10.251Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-8034DC94 eventId=evt-3e0de9a7-e47e-4a96-9410-06fac8caeeea correlationId=corr-e0ae2127-35b2-4c7d-98e8-e8d299168e7f
+2026-10-30T18:01:11.257Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-B6DE9271 eventId=evt-9eb03633-fc54-4ca7-97b7-54be0b7acb18 correlationId=corr-665e14be-4451-4417-841d-5eaf70e9ce35
+2026-10-30T18:01:12.257Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-05CEDD1E eventId=evt-0d8f0b45-f1a1-4866-869f-5dd41944c3bd correlationId=corr-6ed1e22e-14a6-4ad9-8c94-f2013f32a276
+Timeout esperando LAG=0 en inventory-service-group
+
+# Estado final de todos los grupos
+inventory-service-group LAG=1
+billing-service-group LAG=0
+notification-service-group LAG=0
+audit-service-group LAG=0

@@ -1,0 +1,48 @@
+
+==================== CP-08 Message-driven: no existe comunicación directa entre servicios ====================
+# Ejecutado: 2026-10-30 12:44:24 (hora local) / 17:44:24 UTC
+
+# El worker no publica puertos; solo orders-api (3000) y rabbitmq (5672, 15672)
+
+$ docker compose ps --format 'table {{.Name}}\t{{.Ports}}'
+NAME                                     PORTS
+orders-api                               0.0.0.0:3010->3000/tcp, [::]:3010->3000/tcp
+rabbitmq                                 0.0.0.0:5672->5672/tcp, [::]:5672->5672/tcp, 0.0.0.0:15672->15672/tcp, [::]:15672->15672/tcp
+rabbitmq-pedidos-notification-worker-1   
+
+# Sockets en escucha dentro del worker: solo 127.0.0.11 (DNS interno de Docker), no hay servidor HTTP
+
+$ docker compose exec notification-worker netstat -tln; echo '(fin de la lista)'
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       
+tcp        0      0 127.0.0.11:42933        0.0.0.0:*               LISTEN      
+(fin de la lista)
+
+# Conexiones TCP establecidas: API y worker solo hablan con rabbitmq:5672
+
+$ docker inspect -f '{{.Name}} {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' rabbitmq orders-api $(docker compose ps -q notification-worker)
+/rabbitmq 172.20.0.2
+/orders-api 172.20.0.4
+/rabbitmq-pedidos-notification-worker-1 172.20.0.3
+
+$ docker compose exec orders-api netstat -tn | grep ESTABLISHED
+tcp        0      0 172.20.0.4:37510        172.20.0.2:5672         ESTABLISHED 
+
+$ docker compose exec notification-worker netstat -tn | grep ESTABLISHED
+tcp        0      0 172.20.0.3:40144        172.20.0.2:5672         ESTABLISHED 
+
+# Intento de llamada HTTP directa de la API al worker: debe fallar
+
+$ docker compose exec orders-api wget -q -T 3 -O- http://notification-worker:3000/ 2>&1 || echo 'Conexión rechazada: el worker no expone HTTP'
+wget: can't connect to remote host (172.20.0.3): Connection refused
+Conexión rechazada: el worker no expone HTTP
+
+# Conexiones registradas en el broker
+notification-worker@c5e91622592e  172.20.0.3:40144 -> 172.20.0.2:5672  protocolo=AMQP 0-9-1
+orders-api  172.20.0.4:37510 -> 172.20.0.2:5672  protocolo=AMQP 0-9-1
+
+# Revisión del código: ninguna llamada HTTP saliente en la API ni servidor HTTP en el worker
+
+$ grep -nE 'http\.request|[^e]fetch\(|axios|createServer|listen\(' orders-api/index.js notification-worker/index.js
+orders-api/index.js:120:const server = http.createServer((req, res) => {
+orders-api/index.js:133:server.listen(PORT, () => {

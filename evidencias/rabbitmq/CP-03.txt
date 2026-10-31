@@ -1,0 +1,25 @@
+
+==================== CP-03 Consumo de mensaje (RabbitMQ) ====================
+# Ejecutado: 2026-10-30 12:42:19 (hora local) / 17:42:19 UTC
+
+# Se inicia el worker con el mensaje de CP-02 esperando en la cola
+
+$ docker compose start notification-worker 2>&1
+ Container rabbitmq Waiting 
+ Container rabbitmq Healthy 
+ Container rabbitmq-pedidos-notification-worker-1 Starting 
+ Container rabbitmq-pedidos-notification-worker-1 Started 
+
+# Durante el procesamiento (2-5 s): el mensaje pasa a Unacked
+[cola pedidos] durable=true Ready=0 Unacked=1 Total=1 consumers=1
+
+# Después del ACK manual: la cola queda vacía
+[cola pedidos] durable=true Ready=0 Unacked=0 Total=0 consumers=1
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:42:19Z notification-worker
+2026-10-30T17:42:20.487Z [notification-worker@c5e91622592e] Iniciando worker
+2026-10-30T17:42:20.559Z [notification-worker@c5e91622592e] Conectado a RabbitMQ. Escuchando la cola "pedidos" (prefetch=1, ack manual, procesamiento=3000ms)
+2026-10-30T17:42:20.562Z [notification-worker@c5e91622592e] Mensaje recibido orderId=ORD-480AC32D correlationId=corr-da3c71a9-fcbe-49fd-a291-a0976c6bdabc redelivered=true deliveryTag=1
+2026-10-30T17:42:20.562Z [notification-worker@c5e91622592e] Contenido: {"type":"ProcessOrder","orderId":"ORD-480AC32D","correlationId":"corr-da3c71a9-fcbe-49fd-a291-a0976c6bdabc","customerName":"Pedro","product":"Libro de arquitectura","quantity":1,"createdAt":"2026-10-30T17:41:05.709Z"}
+2026-10-30T17:42:20.562Z [notification-worker@c5e91622592e] Simulando envío de notificación a Pedro...
+2026-10-30T17:42:23.566Z [notification-worker@c5e91622592e] Notificación enviada. ACK confirmado orderId=ORD-480AC32D correlationId=corr-da3c71a9-fcbe-49fd-a291-a0976c6bdabc

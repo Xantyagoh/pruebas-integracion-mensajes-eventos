@@ -1,0 +1,25 @@
+
+==================== CP-09 Resilient: el sistema soporta la caída del consumidor ====================
+# Ejecutado: 2026-10-30 12:44:27 (hora local) / 17:44:27 UTC
+
+$ docker compose stop notification-worker 2>&1
+ Container rabbitmq-pedidos-notification-worker-1 Stopping 
+ Container rabbitmq-pedidos-notification-worker-1 Stopped 
+
+$ docker compose ps --format 'table {{.Name}}\t{{.Status}}'
+NAME         STATUS
+orders-api   Up 3 minutes
+rabbitmq     Up 3 minutes (healthy)
+
+# Con el worker caído la API sigue aceptando pedidos
+Pedido 1:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-64D9F560","correlationId":"corr-4d480808-1ff8-4860-84af-eb4e10f21a42"}  -> HTTP 202 en 0.005917s
+Pedido 2:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-EA6E4A51","correlationId":"corr-38c37954-8b19-48a8-a65e-4680925ae469"}  -> HTTP 202 en 0.004328s
+Pedido 3:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-AD987C25","correlationId":"corr-41e77517-13a4-4871-8d29-569d61de30ec"}  -> HTTP 202 en 0.004483s
+Pedido 4:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-2CF8BF57","correlationId":"corr-221ceb5c-275b-4006-90e4-ebce374542ca"}  -> HTTP 202 en 0.004035s
+Pedido 5:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-C208AFA0","correlationId":"corr-fcec9a3b-6c5d-4772-9dd8-5032f6f72963"}  -> HTTP 202 en 0.004695s
+
+$ curl -s http://localhost:3010/health; echo
+{"status":"UP","broker":"connected"}
+
+# Los mensajes se acumulan en la cola (Ready sube, consumers=0)
+[cola pedidos] durable=true Ready=5 Unacked=0 Total=5 consumers=0

@@ -1,0 +1,42 @@
+
+==================== CP-01 Creación de pedido vía API ====================
+# Ejecutado: 2026-10-30 12:40:57 (hora local) / 17:40:57 UTC
+
+# Pedido válido
+
+$ curl -s -i -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d '{"customerName":"Carlos","product":"Libro de arquitectura","quantity":1}' -w '\n(tiempo total: %{time_total}s)\n'
+HTTP/1.1 202 Accepted
+Content-Type: application/json; charset=utf-8
+Date: Fri, 30 Oct 2026 17:40:57 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-5575850C","correlationId":"corr-cd6e8ab2-5a3b-44c4-9b3a-b98f6b9654f4"}
+(tiempo total: 0.010506s)
+
+# Pedido inválido (validación de JSON básico)
+
+$ curl -s -i -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d '{"customerName":"","quantity":0}'
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Date: Fri, 30 Oct 2026 17:40:58 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"rejected","errors":["customerName es obligatorio","product es obligatorio","quantity debe ser un entero positivo"]}
+$ curl -s -i -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d 'esto no es json'
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Date: Fri, 30 Oct 2026 17:40:58 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"rejected","errors":["JSON inválido"]}
+$ docker compose logs --no-log-prefix orders-api | tail -n 4
+2026-10-30T17:40:53.656Z [orders-api] API REST escuchando en el puerto 3000 (POST /orders)
+2026-10-30T17:40:53.724Z [orders-api] Conectado a RabbitMQ (amqp://***@rabbitmq:5672). Cola "pedidos" declarada (durable=true)
+2026-10-30T17:40:57.952Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-5575850C correlationId=corr-cd6e8ab2-5a3b-44c4-9b3a-b98f6b9654f4 customer="Carlos"
+2026-10-30T17:40:58.017Z [orders-api] Pedido rechazado: customerName es obligatorio; product es obligatorio; quantity debe ser un entero positivo

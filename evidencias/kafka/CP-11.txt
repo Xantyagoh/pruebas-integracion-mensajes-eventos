@@ -1,0 +1,32 @@
+
+==================== CP-11 Desacoplamiento temporal: eventos publicados con el consumidor apagado ====================
+# Ejecutado: 2026-10-30 12:51:39 (hora local) / 17:51:39 UTC
+
+# A) billing-consumer vuelve y procesa lo que se publicó mientras estaba apagado
+LAG antes: 3
+
+$ docker compose start billing-consumer 2>&1
+ Container kafka Waiting 
+ Container kafka Healthy 
+ Container kafka-init Starting 
+ Container kafka-init Started 
+ Container kafka-init Waiting 
+ Container kafka-init Exited 
+ Container kafka-pedidos-billing-consumer-1 Starting 
+ Container kafka-pedidos-billing-consumer-1 Started 
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:51:41Z billing-consumer | grep -E 'Unido|Evento recibido|offset=|Factura'
+2026-10-30T17:51:45.778Z [billing-consumer@286de68024c8] Unido al consumer group "billing-service-group". Particiones asignadas de orders.events: [0,1,2]
+2026-10-30T17:51:45.791Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-40AECA0F eventId=evt-21aa2804-73ec-48da-9067-92df12513838 correlationId=corr-0b7e56a0-8b09-441c-810a-6c4e4d6cb070
+2026-10-30T17:51:45.791Z [billing-consumer@286de68024c8] topic=orders.events partition=0 offset=7 key=ORD-40AECA0F
+2026-10-30T17:51:46.791Z [billing-consumer@286de68024c8] Factura generada por $150000 (3 x $50000) (orderId=ORD-40AECA0F)
+2026-10-30T17:51:46.795Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-41652E7F eventId=evt-d14c141c-63a3-4b9f-b497-f8b55cacf9ad correlationId=corr-46b722b8-97de-440b-af5a-d006c2304572
+2026-10-30T17:51:46.796Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=4 key=ORD-41652E7F
+2026-10-30T17:51:47.794Z [billing-consumer@286de68024c8] Factura generada por $50000 (1 x $50000) (orderId=ORD-41652E7F)
+2026-10-30T17:51:47.794Z [billing-consumer@286de68024c8] Evento recibido: OrderCreated orderId=ORD-2BAF2935 eventId=evt-b93a18ea-ed93-425e-bb93-54f1b12ddd76 correlationId=corr-68583954-01c9-4125-81e2-5a4f2f975c46
+2026-10-30T17:51:47.795Z [billing-consumer@286de68024c8] topic=orders.events partition=2 offset=5 key=ORD-2BAF2935
+2026-10-30T17:51:48.795Z [billing-consumer@286de68024c8] Factura generada por $100000 (2 x $50000) (orderId=ORD-2BAF2935)
+GROUP                 TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+billing-service-group orders.events   0          8               8               0               billing-consumer-7a329260-427a-40a3-b824-eea7e5a3f3d2 /172.20.0.5     billing-consumer
+billing-service-group orders.events   1          5               5               0               billing-consumer-7a329260-427a-40a3-b824-eea7e5a3f3d2 /172.20.0.5     billing-consumer
+billing-service-group orders.events   2          6               6               0               billing-consumer-7a329260-427a-40a3-b824-eea7e5a3f3d2 /172.20.0.5     billing-consumer

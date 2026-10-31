@@ -1,0 +1,23 @@
+
+==================== CP-07 Responsive: la API responde sin esperar al consumidor ====================
+# Ejecutado: 2026-10-30 12:42:41 (hora local) / 17:42:41 UTC
+
+# El worker tarda 3 s por mensaje (PROCESSING_MS=3000). Se envían 10 pedidos seguidos.
+Pedido  1:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-9A4F8C35","correlationId":"corr-0245ac08-d9cc-4efb-86d1-564b9a5817e5"}  -> HTTP 202 en 0.005559s
+Pedido  2:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-88E1413B","correlationId":"corr-1f7371bc-4d13-4f44-8828-dbf0d0a5e526"}  -> HTTP 202 en 0.006073s
+Pedido  3:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-0CEB6E04","correlationId":"corr-770bf818-c459-4fac-b288-fb73c0e72169"}  -> HTTP 202 en 0.005848s
+Pedido  4:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-2ACAE30F","correlationId":"corr-0ba3c71f-afbf-464a-8f69-411dfd913846"}  -> HTTP 202 en 0.004742s
+Pedido  5:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-F9FA9D2A","correlationId":"corr-cda65648-0057-4eff-b1a6-8d4f51fe269d"}  -> HTTP 202 en 0.004126s
+Pedido  6:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-B67E4B52","correlationId":"corr-8d88435f-d1b6-435c-81fc-619001a477ae"}  -> HTTP 202 en 0.004604s
+Pedido  7:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-22885040","correlationId":"corr-a33f5a18-fd2f-4ed2-bd08-8e863c3910df"}  -> HTTP 202 en 0.004309s
+Pedido  8:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-56D9C350","correlationId":"corr-4a13f10f-6855-455c-927b-9f8aa6ddf9d6"}  -> HTTP 202 en 0.004554s
+Pedido  9:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-EF26C73D","correlationId":"corr-74ac0d19-2c4a-4cdf-a7a6-676e4ef4a3d0"}  -> HTTP 202 en 0.005473s
+Pedido 10:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-6DE252F4","correlationId":"corr-ef05cfd2-74c2-4219-b437-340798c73e97"}  -> HTTP 202 en 0.004591s
+Tiempo total de las 10 respuestas HTTP: 428 ms
+
+# Inmediatamente después: la mayoría de los mensajes siguen pendientes en la cola
+[cola pedidos] durable=true Ready=9 Unacked=1 Total=10 consumers=1
+
+# El worker necesita ~30 s para terminarlos
+Cola vacía después de 30 s adicionales
+[cola pedidos] durable=true Ready=0 Unacked=0 Total=0 consumers=1

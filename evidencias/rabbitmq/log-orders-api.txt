@@ -1,0 +1,41 @@
+2026-10-30T17:40:53.656Z [orders-api] API REST escuchando en el puerto 3000 (POST /orders)
+2026-10-30T17:40:53.724Z [orders-api] Conectado a RabbitMQ (amqp://***@rabbitmq:5672). Cola "pedidos" declarada (durable=true)
+2026-10-30T17:40:57.952Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-5575850C correlationId=corr-cd6e8ab2-5a3b-44c4-9b3a-b98f6b9654f4 customer="Carlos"
+2026-10-30T17:40:58.017Z [orders-api] Pedido rechazado: customerName es obligatorio; product es obligatorio; quantity debe ser un entero positivo
+2026-10-30T17:41:05.710Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-480AC32D correlationId=corr-da3c71a9-fcbe-49fd-a291-a0976c6bdabc customer="Pedro"
+2026-10-30T17:42:29.500Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-E4B0124F correlationId=corr-CP06-124228 customer="Laura"
+2026-10-30T17:42:41.467Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-9A4F8C35 correlationId=corr-0245ac08-d9cc-4efb-86d1-564b9a5817e5 customer="Cliente1"
+2026-10-30T17:42:41.507Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-88E1413B correlationId=corr-1f7371bc-4d13-4f44-8828-dbf0d0a5e526 customer="Cliente2"
+2026-10-30T17:42:41.549Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-0CEB6E04 correlationId=corr-770bf818-c459-4fac-b288-fb73c0e72169 customer="Cliente3"
+2026-10-30T17:42:41.590Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-2ACAE30F correlationId=corr-0ba3c71f-afbf-464a-8f69-411dfd913846 customer="Cliente4"
+2026-10-30T17:42:41.626Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-F9FA9D2A correlationId=corr-cda65648-0057-4eff-b1a6-8d4f51fe269d customer="Cliente5"
+2026-10-30T17:42:41.662Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-B67E4B52 correlationId=corr-8d88435f-d1b6-435c-81fc-619001a477ae customer="Cliente6"
+2026-10-30T17:42:41.697Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-22885040 correlationId=corr-a33f5a18-fd2f-4ed2-bd08-8e863c3910df customer="Cliente7"
+2026-10-30T17:42:41.734Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-56D9C350 correlationId=corr-4a13f10f-6855-455c-927b-9f8aa6ddf9d6 customer="Cliente8"
+2026-10-30T17:42:41.772Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-EF26C73D correlationId=corr-74ac0d19-2c4a-4cdf-a7a6-676e4ef4a3d0 customer="Cliente9"
+2026-10-30T17:42:41.817Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-6DE252F4 correlationId=corr-ef05cfd2-74c2-4219-b437-340798c73e97 customer="Cliente10"
+2026-10-30T17:44:29.827Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-64D9F560 correlationId=corr-4d480808-1ff8-4860-84af-eb4e10f21a42 customer="SinWorker1"
+2026-10-30T17:44:29.866Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-EA6E4A51 correlationId=corr-38c37954-8b19-48a8-a65e-4680925ae469 customer="SinWorker2"
+2026-10-30T17:44:29.902Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-AD987C25 correlationId=corr-41e77517-13a4-4871-8d29-569d61de30ec customer="SinWorker3"
+2026-10-30T17:44:29.936Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-2CF8BF57 correlationId=corr-221ceb5c-275b-4006-90e4-ebce374542ca customer="SinWorker4"
+2026-10-30T17:44:29.973Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-C208AFA0 correlationId=corr-fcec9a3b-6c5d-4772-9dd8-5032f6f72963 customer="SinWorker5"
+2026-10-30T17:45:18.069Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-00498E99 correlationId=corr-02465bef-155b-4605-978b-5597628a0c25 customer="Escala1"
+2026-10-30T17:45:18.103Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-237E4B02 correlationId=corr-b00d31e6-b23b-4181-8437-305f515aad91 customer="Escala2"
+2026-10-30T17:45:18.138Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-51A1D4BB correlationId=corr-5c2ed29e-d3d3-4fa0-8163-8f709d9bea3d customer="Escala3"
+2026-10-30T17:45:18.176Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-A55ACF12 correlationId=corr-0a3ff298-b726-47fb-a0c5-15906d961620 customer="Escala4"
+2026-10-30T17:45:18.211Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-F1F2854B correlationId=corr-94ae1c8f-4124-468d-bf7e-61f231c6e9c1 customer="Escala5"
+2026-10-30T17:45:18.247Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-76063D78 correlationId=corr-298391c8-135f-4c16-be6c-89f2511c97eb customer="Escala6"
+2026-10-30T17:45:18.281Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-0B198BDA correlationId=corr-1e9b8e3b-432a-4cb8-b027-9cbd575751d6 customer="Escala7"
+2026-10-30T17:45:18.317Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-1617EE61 correlationId=corr-84253d57-b80b-4fd4-a0f3-e174036330ae customer="Escala8"
+2026-10-30T17:45:18.352Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-C735BE67 correlationId=corr-2191242c-8981-48e8-b600-7d75a453a751 customer="Escala9"
+2026-10-30T17:45:39.981Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-B867DF6A correlationId=corr-dc83c1ab-4bab-4dd1-bec9-3f5c9138f45c customer="Recupera1"
+2026-10-30T17:45:40.015Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-674353DA correlationId=corr-d1788639-aa93-4ece-8bb4-e138c216c02c customer="Recupera2"
+2026-10-30T17:45:40.047Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-94C7FA35 correlationId=corr-1a1022ed-0081-4fc0-825a-f8729bd9b6ea customer="Recupera3"
+2026-10-30T17:46:00.388Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-CC50F3CA correlationId=corr-d398f8f7-d7f5-401d-b1d6-88b2b87c29d0 customer="Broker1"
+2026-10-30T17:46:00.422Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-6064FCE9 correlationId=corr-452aa9c9-9348-48e3-b67d-36aca396c522 customer="Broker2"
+2026-10-30T17:46:00.457Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-9B7ADC08 correlationId=corr-795063f5-a364-4d95-bf7b-acf93e418711 customer="Broker3"
+2026-10-30T17:46:02.566Z [orders-api] Conexión con RabbitMQ cerrada. Reintentando...
+2026-10-30T17:46:04.570Z [orders-api] RabbitMQ no disponible (intento 1): connect ECONNREFUSED 172.20.0.2:5672
+2026-10-30T17:46:07.572Z [orders-api] RabbitMQ no disponible (intento 2): connect ECONNREFUSED 172.20.0.2:5672
+2026-10-30T17:46:10.627Z [orders-api] Conectado a RabbitMQ (amqp://***@rabbitmq:5672). Cola "pedidos" declarada (durable=true)
+2026-10-30T17:46:12.361Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-26B3A7ED correlationId=corr-45f848bc-ec7e-4a28-965d-566ab46a50b6 customer="Broker4"

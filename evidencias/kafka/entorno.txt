@@ -1,0 +1,99 @@
+
+==================== Montaje del entorno Kafka ====================
+# Ejecutado: 2026-10-30 12:46:39 (hora local) / 17:46:39 UTC
+
+$ docker compose --profile late down -v --remove-orphans 2>&1 | tail -n 3
+
+$ docker compose up -d --build 2>&1 | grep -E 'Built|Started|Healthy|Exited|Created'
+ Image kafka-pedidos-billing-consumer Built 
+ Image kafka-pedidos-inventory-consumer Built 
+ Image kafka-pedidos-notification-consumer Built 
+ Image kafka-pedidos-orders-api Built 
+ Network kafka-pedidos_default Created 
+ Volume kafka-pedidos_kafka-data Created 
+ Container kafka Created 
+ Container kafka-init Created 
+ Container kafka-ui Created 
+ Container kafka-pedidos-billing-consumer-1 Created 
+ Container kafka-pedidos-notification-consumer-1 Created 
+ Container orders-api Created 
+ Container kafka-pedidos-inventory-consumer-1 Created 
+ Container kafka Started 
+ Container kafka Healthy 
+ Container kafka Healthy 
+ Container kafka-init Started 
+ Container kafka-ui Started 
+ Container kafka-init Exited 
+ Container kafka-init Exited 
+ Container kafka-init Exited 
+ Container kafka-init Exited 
+ Container kafka-pedidos-inventory-consumer-1 Started 
+ Container kafka-pedidos-billing-consumer-1 Started 
+ Container kafka-pedidos-notification-consumer-1 Started 
+ Container orders-api Started 
+
+$ docker compose ps -a --format 'table {{.Name}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+NAME                                    IMAGE                                 STATUS                     PORTS
+kafka                                   bitnamilegacy/kafka:3.7               Up 16 seconds (healthy)    0.0.0.0:29092->29092/tcp, [::]:29092->29092/tcp
+kafka-init                              bitnamilegacy/kafka:3.7               Exited (0) 6 seconds ago   
+kafka-pedidos-billing-consumer-1        kafka-pedidos-billing-consumer        Up 6 seconds               
+kafka-pedidos-inventory-consumer-1      kafka-pedidos-inventory-consumer      Up 6 seconds               
+kafka-pedidos-notification-consumer-1   kafka-pedidos-notification-consumer   Up 6 seconds               
+kafka-ui                                provectuslabs/kafka-ui:v0.7.2         Up 9 seconds               0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+orders-api                              kafka-pedidos-orders-api              Up 6 seconds               0.0.0.0:3010->3000/tcp, [::]:3010->3000/tcp
+
+# Puertos publicados en el host
+
+$ docker port kafka; docker port kafka-ui; docker port orders-api
+29092/tcp -> 0.0.0.0:29092
+29092/tcp -> [::]:29092
+8080/tcp -> 0.0.0.0:8080
+8080/tcp -> [::]:8080
+3000/tcp -> 0.0.0.0:3010
+3000/tcp -> [::]:3010
+
+# Logs de arranque del broker Kafka (modo KRaft)
+
+$ docker logs kafka 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E 'Kafka version|Kafka Server started|Transition from STARTING to STARTED|Awaiting socket connections on' | head -n 8
+[2026-10-30 17:47:26,629] INFO Awaiting socket connections on 0.0.0.0:9093. (kafka.network.DataPlaneAcceptor)
+[2026-10-30 17:47:27,119] INFO Awaiting socket connections on 0.0.0.0:9092. (kafka.network.DataPlaneAcceptor)
+[2026-10-30 17:47:27,120] INFO Awaiting socket connections on 0.0.0.0:29092. (kafka.network.DataPlaneAcceptor)
+[2026-10-30 17:47:27,123] INFO [BrokerServer id=1] Transition from STARTING to STARTED (kafka.server.BrokerServer)
+[2026-10-30 17:47:27,124] INFO Kafka version: 3.7.1 (org.apache.kafka.common.utils.AppInfoParser)
+[2026-10-30 17:47:27,125] INFO [KafkaRaftServer nodeId=1] Kafka Server started (kafka.server.KafkaRaftServer)
+
+# Creación del tópico (contenedor kafka-init)
+
+$ docker compose logs --no-log-prefix kafka-init
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Created topic orders.events.
+Topic: orders.events	TopicId: Npzu0elsS_y_VE3viKXIUA	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: orders.events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: orders.events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+
+# Kafka UI
+
+$ docker compose logs --no-log-prefix kafka-ui 2>&1 | grep -E 'Started KafkaUiApplication|Netty started' | head -n 3
+[30m2026-10-30 17:47:35,826[0;39m [34mINFO [0;39m [[34mmain[0;39m] [33mo.s.b.w.e.n.NettyWebServer[0;39m: Netty started on port 8080
+[30m2026-10-30 17:47:35,847[0;39m [34mINFO [0;39m [[34mmain[0;39m] [33mc.p.k.u.KafkaUiApplication[0;39m: Started KafkaUiApplication in 6.153 seconds (process running for 6.979)
+
+$ curl -s -o /dev/null -w 'GET http://localhost:8080 -> HTTP %{http_code}\n' http://localhost:8080
+GET http://localhost:8080 -> HTTP 200
+
+# Logs de arranque de los servicios
+
+$ docker compose logs --no-log-prefix orders-api inventory-consumer billing-consumer notification-consumer
+2026-10-30T17:47:32.652Z [billing-consumer@286de68024c8] Iniciando consumidor
+2026-10-30T17:47:32.863Z [orders-api] API REST escuchando en el puerto 3000 (POST /orders)
+2026-10-30T17:47:32.732Z [billing-consumer@286de68024c8] Suscrito a orders.events con groupId=billing-service-group
+2026-10-30T17:47:32.612Z [inventory-consumer@d5d9dfbc2cc6] Iniciando consumidor
+2026-10-30T17:47:32.900Z [orders-api] Productor conectado a Kafka (kafka:9092). Tópico de publicación: orders.events
+2026-10-30T17:47:32.708Z [notification-consumer@38db5bcd9c8a] Iniciando consumidor
+{"level":"ERROR","timestamp":"2026-10-30T17:47:32.748Z","logger":"kafkajs","message":"[Connection] Response GroupCoordinator(key: 10, version: 2)","broker":"kafka:9092","clientId":"billing-consumer","error":"The group coordinator is not available","correlationId":2,"size":55}
+2026-10-30T17:47:35.022Z [billing-consumer@286de68024c8] Unido al consumer group "billing-service-group". Particiones asignadas de orders.events: [0,1,2]
+2026-10-30T17:47:32.793Z [notification-consumer@38db5bcd9c8a] Suscrito a orders.events con groupId=notification-service-group
+2026-10-30T17:47:34.775Z [notification-consumer@38db5bcd9c8a] Unido al consumer group "notification-service-group". Particiones asignadas de orders.events: [0,1,2]
+2026-10-30T17:47:32.684Z [inventory-consumer@d5d9dfbc2cc6] Suscrito a orders.events con groupId=inventory-service-group
+{"level":"ERROR","timestamp":"2026-10-30T17:47:32.707Z","logger":"kafkajs","message":"[Connection] Response GroupCoordinator(key: 10, version: 2)","broker":"kafka:9092","clientId":"inventory-consumer","error":"The group coordinator is not available","correlationId":2,"size":55}
+2026-10-30T17:47:35.710Z [inventory-consumer@d5d9dfbc2cc6] Unido al consumer group "inventory-service-group". Particiones asignadas de orders.events: [0,1,2]

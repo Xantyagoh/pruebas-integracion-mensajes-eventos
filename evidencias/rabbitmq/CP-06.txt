@@ -1,0 +1,66 @@
+
+==================== CP-06 Trazabilidad del flujo (correlationId) ====================
+# Ejecutado: 2026-10-30 12:42:28 (hora local) / 17:42:28 UTC
+
+# Se activa la traza del broker (plugin rabbitmq_tracing) para registrar publicaciones y entregas
+PUT /api/traces/%2F/cp06 -> HTTP 201
+
+# Pedido con cabecera X-Correlation-Id: corr-CP06-124228
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-E4B0124F","correlationId":"corr-CP06-124228"}  -> HTTP 202 en 0.006590s
+
+# 1) Log de la API (productor)
+
+$ docker compose logs --no-log-prefix orders-api | grep corr-CP06-124228
+2026-10-30T17:42:29.500Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-E4B0124F correlationId=corr-CP06-124228 customer="Laura"
+
+# 2) Log del broker (bitácora de tracing dentro del contenedor rabbitmq)
+
+$ docker exec rabbitmq cat /var/tmp/rabbitmq-tracing/cp06.log   (entradas que contienen corr-CP06-124228)
+2026-10-30T17:42:29.499+00:00: Message published
+
+Node:         rabbit@rabbitmq
+Connection:   172.20.0.4:37510 -> 172.20.0.2:5672
+Virtual host: /
+User:         admin
+Channel:      1
+Exchange:     
+Routing keys: [<<"pedidos">>]
+Routed queues: [<<"pedidos">>]
+Properties:   [{<<"app_id">>,longstr,<<"orders-api">>},
+               {<<"type">>,longstr,<<"ProcessOrder">>},
+               {<<"timestamp">>,signedint,1793382149},
+               {<<"message_id">>,longstr,<<"ORD-E4B0124F">>},
+               {<<"correlation_id">>,longstr,<<"corr-CP06-124228">>},
+               {<<"delivery_mode">>,signedint,2},
+               {<<"headers">>,table,[]},
+               {<<"content_type">>,longstr,<<"application/json">>}]
+Payload: 
+{"type":"ProcessOrder","orderId":"ORD-E4B0124F","correlationId":"corr-CP06-124228","customerName":"Laura","product":"Curso de QA","quantity":2,"createdAt":"2026-10-30T17:42:29.498Z"}
+----------------------------------------
+2026-10-30T17:42:29.500+00:00: Message received
+
+Node:         rabbit@rabbitmq
+Connection:   172.20.0.3:40144 -> 172.20.0.2:5672
+Virtual host: /
+User:         admin
+Channel:      1
+Exchange:     
+Routing keys: [<<"pedidos">>]
+Queue:        pedidos
+Properties:   [{<<"app_id">>,longstr,<<"orders-api">>},
+               {<<"type">>,longstr,<<"ProcessOrder">>},
+               {<<"timestamp">>,signedint,1793382149},
+               {<<"message_id">>,longstr,<<"ORD-E4B0124F">>},
+               {<<"correlation_id">>,longstr,<<"corr-CP06-124228">>},
+               {<<"delivery_mode">>,signedint,2},
+               {<<"headers">>,table,[]},
+               {<<"content_type">>,longstr,<<"application/json">>}]
+Payload: 
+{"type":"ProcessOrder","orderId":"ORD-E4B0124F","correlationId":"corr-CP06-124228","customerName":"Laura","product":"Curso de QA","quantity":2,"createdAt":"2026-10-30T17:42:29.498Z"}
+
+# 3) Log del consumidor
+
+$ docker compose logs --no-log-prefix notification-worker | grep corr-CP06-124228
+2026-10-30T17:42:29.500Z [notification-worker@c5e91622592e] Mensaje recibido orderId=ORD-E4B0124F correlationId=corr-CP06-124228 redelivered=false deliveryTag=2
+2026-10-30T17:42:29.500Z [notification-worker@c5e91622592e] Contenido: {"type":"ProcessOrder","orderId":"ORD-E4B0124F","correlationId":"corr-CP06-124228","customerName":"Laura","product":"Curso de QA","quantity":2,"createdAt":"2026-10-30T17:42:29.498Z"}
+2026-10-30T17:42:32.505Z [notification-worker@c5e91622592e] Notificación enviada. ACK confirmado orderId=ORD-E4B0124F correlationId=corr-CP06-124228

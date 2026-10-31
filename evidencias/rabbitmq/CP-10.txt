@@ -1,0 +1,49 @@
+
+==================== CP-10 Elastic: distribución de carga con múltiples consumidores ====================
+# Ejecutado: 2026-10-30 12:45:14 (hora local) / 17:45:14 UTC
+
+$ docker compose up -d --scale notification-worker=3 2>&1 | grep -E 'Started|Running'
+ Container rabbitmq Running 
+ Container rabbitmq-pedidos-notification-worker-1 Running 
+ Container orders-api Running 
+ Container rabbitmq-pedidos-notification-worker-3 Started 
+ Container rabbitmq-pedidos-notification-worker-2 Started 
+
+$ docker compose ps notification-worker --format 'table {{.Name}}\t{{.Status}}'
+NAME                                     STATUS
+rabbitmq-pedidos-notification-worker-1   Up 27 seconds
+rabbitmq-pedidos-notification-worker-2   Up 1 second
+rabbitmq-pedidos-notification-worker-3   Up 1 second
+[cola pedidos] durable=true Ready=0 Unacked=0 Total=0 consumers=3
+
+# Se envían 9 pedidos
+Pedido 1:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-00498E99","correlationId":"corr-02465bef-155b-4605-978b-5597628a0c25"}  -> HTTP 202 en 0.004498s
+Pedido 2:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-237E4B02","correlationId":"corr-b00d31e6-b23b-4181-8437-305f515aad91"}  -> HTTP 202 en 0.004010s
+Pedido 3:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-51A1D4BB","correlationId":"corr-5c2ed29e-d3d3-4fa0-8163-8f709d9bea3d"}  -> HTTP 202 en 0.004203s
+Pedido 4:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-A55ACF12","correlationId":"corr-0a3ff298-b726-47fb-a0c5-15906d961620"}  -> HTTP 202 en 0.004696s
+Pedido 5:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-F1F2854B","correlationId":"corr-94ae1c8f-4124-468d-bf7e-61f231c6e9c1"}  -> HTTP 202 en 0.004136s
+Pedido 6:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-76063D78","correlationId":"corr-298391c8-135f-4c16-be6c-89f2511c97eb"}  -> HTTP 202 en 0.003951s
+Pedido 7:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-0B198BDA","correlationId":"corr-1e9b8e3b-432a-4cb8-b027-9cbd575751d6"}  -> HTTP 202 en 0.004353s
+Pedido 8:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-1617EE61","correlationId":"corr-84253d57-b80b-4fd4-a0f3-e174036330ae"}  -> HTTP 202 en 0.004214s
+Pedido 9:{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-C735BE67","correlationId":"corr-2191242c-8981-48e8-b600-7d75a453a751"}  -> HTTP 202 en 0.004347s
+
+# Con prefetch=1 cada worker toma un mensaje: Unacked=3
+[cola pedidos] durable=true Ready=6 Unacked=3 Total=9 consumers=3
+
+# Pedidos procesados por cada instancia
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:45:14Z notification-worker | grep 'ACK confirmado' | sed -E 's/.*\[(notification-worker@[a-f0-9]+)\].*orderId=(.*)/\1 \2/' | sort
+notification-worker@3bc4f9724cd0 ORD-1617EE61 correlationId=corr-84253d57-b80b-4fd4-a0f3-e174036330ae
+notification-worker@3bc4f9724cd0 ORD-237E4B02 correlationId=corr-b00d31e6-b23b-4181-8437-305f515aad91
+notification-worker@3bc4f9724cd0 ORD-F1F2854B correlationId=corr-94ae1c8f-4124-468d-bf7e-61f231c6e9c1
+notification-worker@6d42aa18b06f ORD-51A1D4BB correlationId=corr-5c2ed29e-d3d3-4fa0-8163-8f709d9bea3d
+notification-worker@6d42aa18b06f ORD-76063D78 correlationId=corr-298391c8-135f-4c16-be6c-89f2511c97eb
+notification-worker@6d42aa18b06f ORD-C735BE67 correlationId=corr-2191242c-8981-48e8-b600-7d75a453a751
+notification-worker@c5e91622592e ORD-00498E99 correlationId=corr-02465bef-155b-4605-978b-5597628a0c25
+notification-worker@c5e91622592e ORD-0B198BDA correlationId=corr-1e9b8e3b-432a-4cb8-b027-9cbd575751d6
+notification-worker@c5e91622592e ORD-A55ACF12 correlationId=corr-0a3ff298-b726-47fb-a0c5-15906d961620
+
+$ docker compose logs --no-log-prefix --since 2026-10-30T17:45:14Z notification-worker | grep 'ACK confirmado' | grep -oE 'notification-worker@[a-f0-9]+' | sort | uniq -c
+      3 notification-worker@3bc4f9724cd0
+      3 notification-worker@6d42aa18b06f
+      3 notification-worker@c5e91622592e
