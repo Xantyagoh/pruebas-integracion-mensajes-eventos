@@ -139,7 +139,7 @@ cp07() {
 
 cp08() {
   title "CP-08 Message-driven: no existe comunicación directa entre servicios"; stamp
-  note "Los consumidores no publican puertos; solo orders-api (3000), kafka (29092) y kafka-ui (8080)"
+  note "Los consumidores no publican puertos; solo orders-api (${API##*:}->3000), kafka (29092) y kafka-ui (8080)"
   run "docker compose ps --format 'table {{.Name}}\t{{.Ports}}'"
   note "Sockets en escucha dentro de cada consumidor: solo 127.0.0.11 (DNS interno de Docker), no hay servidor HTTP"
   for s in inventory-consumer billing-consumer notification-consumer; do

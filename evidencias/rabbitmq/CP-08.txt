@@ -2,7 +2,7 @@
 ==================== CP-08 Message-driven: no existe comunicación directa entre servicios ====================
 # Ejecutado: 2026-10-30 12:44:24 (hora local) / 17:44:24 UTC
 
-# El worker no publica puertos; solo orders-api (3000) y rabbitmq (5672, 15672)
+# El worker no publica puertos; solo orders-api (3010->3000) y rabbitmq (5672, 15672)
 
 $ docker compose ps --format 'table {{.Name}}\t{{.Ports}}'
 NAME                                     PORTS

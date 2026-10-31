@@ -130,7 +130,7 @@ cp07() {
 
 cp08() {
   title "CP-08 Message-driven: no existe comunicación directa entre servicios"; stamp
-  note "El worker no publica puertos; solo orders-api (3000) y rabbitmq (5672, 15672)"
+  note "El worker no publica puertos; solo orders-api (${API##*:}->3000) y rabbitmq (5672, 15672)"
   run "docker compose ps --format 'table {{.Name}}\t{{.Ports}}'"
   note "Sockets en escucha dentro del worker: solo 127.0.0.11 (DNS interno de Docker), no hay servidor HTTP"
   run "docker compose exec notification-worker netstat -tln; echo '(fin de la lista)'"

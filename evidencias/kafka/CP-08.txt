@@ -2,7 +2,7 @@
 ==================== CP-08 Message-driven: no existe comunicación directa entre servicios ====================
 # Ejecutado: 2026-10-30 12:50:07 (hora local) / 17:50:07 UTC
 
-# Los consumidores no publican puertos; solo orders-api (3000), kafka (29092) y kafka-ui (8080)
+# Los consumidores no publican puertos; solo orders-api (3010->3000), kafka (29092) y kafka-ui (8080)
 
 $ docker compose ps --format 'table {{.Name}}\t{{.Ports}}'
 NAME                                    PORTS
