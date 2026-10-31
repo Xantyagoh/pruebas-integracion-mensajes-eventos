@@ -1,0 +1,40 @@
+# CP-05 (Kafka) - Re-ejecución para las capturas de los logs de cada consumidor - 2026-10-31 16:47 (hora local) / 21:47 UTC
+# Pedido enviado con curl:
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d '{"customerName":"Valentina","product":"Libro de arquitectura","quantity":2,"unitPrice":85000}'
+# orders-api: 2026-10-31T21:47:04.055Z [orders-api] Evento OrderCreated publicado topic=orders.events partition=1 offset=11 orderId=ORD-904F113A eventId=evt-4ee80a7f-adbe-4371-ae62-8b7b3ef4d2e6 correlationId=corr-1fa4fc0b-3ae8-4048-a39e-bdc642ec1216
+
+$ docker compose logs --no-log-prefix inventory-consumer | grep -A 3 'orderId=ORD-904F113A eventId'  (captura: img/14-cp05-log-inventory-consumer.png)
+2026-10-31T21:47:04.065Z [inventory-consumer@d75443aeae94] Evento recibido: OrderCreated orderId=ORD-904F113A eventId=evt-4ee80a7f-adbe-4371-ae62-8b7b3ef4d2e6 correlationId=corr-1fa4fc0b-3ae8-4048-a39e-bdc642ec1216
+2026-10-31T21:47:04.066Z [inventory-consumer@d75443aeae94] topic=orders.events partition=1 offset=11 key=ORD-904F113A
+2026-10-31T21:47:04.066Z [inventory-consumer@d75443aeae94] Simulando reserva de inventario...
+2026-10-31T21:47:05.066Z [inventory-consumer@d75443aeae94] Inventario reservado: 2 x "Libro de arquitectura" (orderId=ORD-904F113A)
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group inventory-service-group
+GROUP                   TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                             HOST            CLIENT-ID
+inventory-service-group orders.events   0          16              16              0               inventory-consumer-44ba800b-4f1a-421d-84b6-411dac7b21f5 /172.20.0.6     inventory-consumer
+inventory-service-group orders.events   1          12              12              0               inventory-consumer-44ba800b-4f1a-421d-84b6-411dac7b21f5 /172.20.0.6     inventory-consumer
+inventory-service-group orders.events   2          9               9               0               inventory-consumer-44ba800b-4f1a-421d-84b6-411dac7b21f5 /172.20.0.6     inventory-consumer
+
+$ docker compose logs --no-log-prefix billing-consumer | grep -A 3 'orderId=ORD-904F113A eventId'  (captura: img/15-cp05-log-billing-consumer.png)
+2026-10-31T21:47:04.065Z [billing-consumer@9831f2f5d7ef] Evento recibido: OrderCreated orderId=ORD-904F113A eventId=evt-4ee80a7f-adbe-4371-ae62-8b7b3ef4d2e6 correlationId=corr-1fa4fc0b-3ae8-4048-a39e-bdc642ec1216
+2026-10-31T21:47:04.066Z [billing-consumer@9831f2f5d7ef] topic=orders.events partition=1 offset=11 key=ORD-904F113A
+2026-10-31T21:47:04.066Z [billing-consumer@9831f2f5d7ef] Simulando generación de factura...
+2026-10-31T21:47:05.067Z [billing-consumer@9831f2f5d7ef] Factura generada por $170000 (2 x $85000) (orderId=ORD-904F113A)
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group billing-service-group
+GROUP                 TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+billing-service-group orders.events   0          16              16              0               billing-consumer-19692776-43ea-42ba-a7a7-0310b7d7c438 /172.20.0.5     billing-consumer
+billing-service-group orders.events   1          12              12              0               billing-consumer-19692776-43ea-42ba-a7a7-0310b7d7c438 /172.20.0.5     billing-consumer
+billing-service-group orders.events   2          9               9               0               billing-consumer-19692776-43ea-42ba-a7a7-0310b7d7c438 /172.20.0.5     billing-consumer
+
+$ docker compose logs --no-log-prefix notification-consumer | grep -A 3 'orderId=ORD-904F113A eventId'  (captura: img/16-cp05-log-notification-consumer.png)
+2026-10-31T21:47:04.064Z [notification-consumer@0bbb226d9b76] Evento recibido: OrderCreated orderId=ORD-904F113A eventId=evt-4ee80a7f-adbe-4371-ae62-8b7b3ef4d2e6 correlationId=corr-1fa4fc0b-3ae8-4048-a39e-bdc642ec1216
+2026-10-31T21:47:04.066Z [notification-consumer@0bbb226d9b76] topic=orders.events partition=1 offset=11 key=ORD-904F113A
+2026-10-31T21:47:04.066Z [notification-consumer@0bbb226d9b76] Simulando envío de notificación al cliente...
+2026-10-31T21:47:05.066Z [notification-consumer@0bbb226d9b76] Notificación enviada a Valentina (orderId=ORD-904F113A)
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group notification-service-group
+GROUP                      TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                HOST            CLIENT-ID
+notification-service-group orders.events   0          16              16              0               notification-consumer-ad213a7c-3865-41f3-824a-42f678a28b38 /172.20.0.7     notification-consumer
+notification-service-group orders.events   1          12              12              0               notification-consumer-ad213a7c-3865-41f3-824a-42f678a28b38 /172.20.0.7     notification-consumer
+notification-service-group orders.events   2          9               9               0               notification-consumer-ad213a7c-3865-41f3-824a-42f678a28b38 /172.20.0.7     notification-consumer

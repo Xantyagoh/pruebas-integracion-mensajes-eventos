@@ -1,0 +1,31 @@
+# CP-06 (Kafka) - trazabilidad de corr-CP06-captura-164914 - re-ejecución 2026-10-31 16:49:14 (hora local) para la captura img/17-cp06-trazabilidad.png
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -H 'X-Correlation-Id: corr-CP06-captura-164914' -d '{"customerName":"Laura","product":"Curso de QA","quantity":2,"unitPrice":120000}'; echo
+{"status":"accepted","message":"Pedido recibido y evento OrderCreated publicado en Kafka","orderId":"ORD-BDD2A01A","eventId":"evt-a1720dab-9e11-4e8d-a32f-83ce573365cb","correlationId":"corr-CP06-captura-164914"}
+# 1) API
+
+$ docker compose logs --no-log-prefix orders-api | grep corr-CP06-captura-164914
+2026-10-31T21:49:14.574Z [orders-api] Evento OrderCreated publicado topic=orders.events partition=0 offset=16 orderId=ORD-BDD2A01A eventId=evt-a1720dab-9e11-4e8d-a32f-83ce573365cb correlationId=corr-CP06-captura-164914
+# 2) Broker: registro en el tópico (partición, offset, headers, key, valor)
+
+$ docker exec kafka kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic orders.events --from-beginning --timeout-ms 6000 --property print.partition=true --property print.offset=true --property print.headers=true --property print.key=true 2>/dev/null | grep corr-CP06-captura-164914
+Partition:0	Offset:16	eventType:OrderCreated,correlationId:corr-CP06-captura-164914	ORD-BDD2A01A	{"eventId":"evt-a1720dab-9e11-4e8d-a32f-83ce573365cb","eventType":"OrderCreated","eventVersion":"1.0","occurredAt":"2026-10-31T21:49:14.560Z","source":"orders-api","correlationId":"corr-CP06-captura-164914","data":{"orderId":"ORD-BDD2A01A","customerName":"Laura","product":"Curso de QA","quantity":2,"unitPrice":120000,"total":240000}}
+# 3) Consumidores
+
+$ docker compose logs --no-log-prefix inventory-consumer | grep -A 3 'correlationId=corr-CP06-captura-164914' | head -n 4
+2026-10-31T21:49:14.579Z [inventory-consumer@d75443aeae94] Evento recibido: OrderCreated orderId=ORD-BDD2A01A eventId=evt-a1720dab-9e11-4e8d-a32f-83ce573365cb correlationId=corr-CP06-captura-164914
+2026-10-31T21:49:14.579Z [inventory-consumer@d75443aeae94] topic=orders.events partition=0 offset=16 key=ORD-BDD2A01A
+2026-10-31T21:49:14.580Z [inventory-consumer@d75443aeae94] Simulando reserva de inventario...
+2026-10-31T21:49:15.580Z [inventory-consumer@d75443aeae94] Inventario reservado: 2 x "Curso de QA" (orderId=ORD-BDD2A01A)
+
+$ docker compose logs --no-log-prefix billing-consumer | grep -A 3 'correlationId=corr-CP06-captura-164914' | head -n 4
+2026-10-31T21:49:14.580Z [billing-consumer@9831f2f5d7ef] Evento recibido: OrderCreated orderId=ORD-BDD2A01A eventId=evt-a1720dab-9e11-4e8d-a32f-83ce573365cb correlationId=corr-CP06-captura-164914
+2026-10-31T21:49:14.581Z [billing-consumer@9831f2f5d7ef] topic=orders.events partition=0 offset=16 key=ORD-BDD2A01A
+2026-10-31T21:49:14.581Z [billing-consumer@9831f2f5d7ef] Simulando generación de factura...
+2026-10-31T21:49:15.581Z [billing-consumer@9831f2f5d7ef] Factura generada por $240000 (2 x $120000) (orderId=ORD-BDD2A01A)
+
+$ docker compose logs --no-log-prefix notification-consumer | grep -A 3 'correlationId=corr-CP06-captura-164914' | head -n 4
+2026-10-31T21:49:14.578Z [notification-consumer@0bbb226d9b76] Evento recibido: OrderCreated orderId=ORD-BDD2A01A eventId=evt-a1720dab-9e11-4e8d-a32f-83ce573365cb correlationId=corr-CP06-captura-164914
+2026-10-31T21:49:14.579Z [notification-consumer@0bbb226d9b76] topic=orders.events partition=0 offset=16 key=ORD-BDD2A01A
+2026-10-31T21:49:14.579Z [notification-consumer@0bbb226d9b76] Simulando envío de notificación al cliente...
+2026-10-31T21:49:15.579Z [notification-consumer@0bbb226d9b76] Notificación enviada a Laura (orderId=ORD-BDD2A01A)

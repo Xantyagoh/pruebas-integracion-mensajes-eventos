@@ -1,0 +1,26 @@
+# CP-01 (RabbitMQ) - re-ejecución 2026-10-31 17:13:31 (hora local). Captura: img/16-cp01-terminal-api.png
+
+$ curl -s -i -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d '{"customerName":"Pedro","product":"Libro de arquitectura","quantity":1}' -w '\n(tiempo total: %{time_total}s)\n'
+HTTP/1.1 202 Accepted
+Content-Type: application/json; charset=utf-8
+Date: Sat, 31 Oct 2026 22:13:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-47977D81","correlationId":"corr-b7996b9f-3e33-44fc-bf1f-5fea9878510e"}
+(tiempo total: 0.062249s)
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d '{"customerName":"","quantity":0}' -w '  -> HTTP %{http_code}\n'
+{"status":"rejected","errors":["customerName es obligatorio","product es obligatorio","quantity debe ser un entero positivo"]}  -> HTTP 400
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d 'esto no es json' -w '  -> HTTP %{http_code}\n'
+{"status":"rejected","errors":["JSON inválido"]}  -> HTTP 400
+
+$ docker compose logs --no-log-prefix orders-api | tail -n 2
+2026-10-31T22:13:31.909Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-47977D81 correlationId=corr-b7996b9f-3e33-44fc-bf1f-5fea9878510e customer="Pedro"
+2026-10-31T22:13:32.207Z [orders-api] Pedido rechazado: customerName es obligatorio; product es obligatorio; quantity debe ser un entero positivo
+
+$ docker compose logs --no-log-prefix notification-worker | grep ORD-47977D81 | grep -E 'Mensaje recibido|ACK'
+2026-10-31T22:13:31.897Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-47977D81 correlationId=corr-b7996b9f-3e33-44fc-bf1f-5fea9878510e redelivered=false deliveryTag=5
+2026-10-31T22:13:34.903Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-47977D81 correlationId=corr-b7996b9f-3e33-44fc-bf1f-5fea9878510e

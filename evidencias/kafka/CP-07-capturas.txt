@@ -1,0 +1,52 @@
+# CP-07 (Kafka) - re-ejecución 2026-10-31 16:50:21 (hora local) para las capturas img/18-cp07-terminal-lag.png e img/19-cp07-kafka-ui-lag.png
+# 10 pedidos seguidos; cada consumidor tarda 1 s por evento (PROCESSING_MS=1000)
+
+$ for i in $(seq 1 10); do curl -s -o /dev/null -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -d "{\"customerName\":\"Cliente$i\",\"product\":\"Producto$i\",\"quantity\":1,\"unitPrice\":10000}" -w "Pedido $i -> HTTP %{http_code} en %{time_total}s\n"; done
+Pedido 1 -> HTTP 202 en 0.021359s
+Pedido 2 -> HTTP 202 en 0.008703s
+Pedido 3 -> HTTP 202 en 0.008982s
+Pedido 4 -> HTTP 202 en 0.010221s
+Pedido 5 -> HTTP 202 en 0.008996s
+Pedido 6 -> HTTP 202 en 0.009184s
+Pedido 7 -> HTTP 202 en 0.008118s
+Pedido 8 -> HTTP 202 en 0.009942s
+Pedido 9 -> HTTP 202 en 0.007747s
+Pedido 10 -> HTTP 202 en 0.006742s
+# Inmediatamente después: LAG por partición de los tres grupos
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group inventory-service-group 2>/dev/null | awk 'NF {print $1, $3, $4, $5, $6}'
+GROUP PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG
+inventory-service-group 0 18 22 4
+inventory-service-group 1 12 13 1
+inventory-service-group 2 9 13 4
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group billing-service-group 2>/dev/null | awk 'NF {print $1, $3, $4, $5, $6}'
+GROUP PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG
+billing-service-group 0 18 22 4
+billing-service-group 1 13 13 0
+billing-service-group 2 9 13 4
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group notification-service-group 2>/dev/null | awk 'NF {print $1, $3, $4, $5, $6}'
+GROUP PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG
+notification-service-group 0 18 22 4
+notification-service-group 1 12 13 1
+notification-service-group 2 13 13 0
+# LAG=0 en los tres grupos 7 s después
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group inventory-service-group 2>/dev/null | awk 'NF {print $1, $3, $4, $5, $6}'
+GROUP PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG
+inventory-service-group 0 22 22 0
+inventory-service-group 1 13 13 0
+inventory-service-group 2 13 13 0
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group billing-service-group 2>/dev/null | awk 'NF {print $1, $3, $4, $5, $6}'
+GROUP PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG
+billing-service-group 0 22 22 0
+billing-service-group 1 13 13 0
+billing-service-group 2 13 13 0
+
+$ docker exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group notification-service-group 2>/dev/null | awk 'NF {print $1, $3, $4, $5, $6}'
+GROUP PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG
+notification-service-group 0 22 22 0
+notification-service-group 1 13 13 0
+notification-service-group 2 13 13 0

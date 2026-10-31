@@ -1,0 +1,90 @@
+# CP-12 (RabbitMQ) - re-ejecución 2026-10-31 16:59:25 (hora local). Capturas: img/14-cp12-terminal-recuperacion.png, img/15-cp12-cola-tras-reinicio-broker.png
+# A) Caída abrupta (SIGKILL) del worker con un mensaje entregado y sin confirmar
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Recupera1","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-E3E32A33","correlationId":"corr-ac9becea-6b2e-42f1-98d7-0e827d0bf99a"}  -> HTTP 202 en 0.062736s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Recupera2","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-A35EF288","correlationId":"corr-7fac7db2-64ce-414d-8545-4a369ca4930b"}  -> HTTP 202 en 0.023547s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Recupera3","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-D8C949E8","correlationId":"corr-56069e12-5d36-4f2b-bdc9-06c3656049ab"}  -> HTTP 202 en 0.013564s
+
+$ docker kill $(docker compose ps -q notification-worker)
+b13fff1de7b53299fbf217d7b4b69adc1c1573ec354ff1521570378324e22cc5
+# Último registro del worker antes de morir: recibió un mensaje y no alcanzó a confirmarlo
+
+$ docker compose logs --no-log-prefix notification-worker | grep -E 'Mensaje recibido|ACK' | tail -n 1
+2026-10-31T21:59:29.056Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-A35EF288 correlationId=corr-7fac7db2-64ce-414d-8545-4a369ca4930b redelivered=false deliveryTag=6
+# El mensaje no confirmado vuelve a Ready: no se pierde
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	2	0	2	0
+
+$ docker compose up -d notification-worker 2>&1 | tail -n 1
+ Container rabbitmq-pedidos-notification-worker-1 Started 
+
+$ docker compose logs --no-log-prefix --since 2026-10-31T21:59:38Z notification-worker | grep -E 'Mensaje recibido|ACK'
+2026-10-31T21:59:42.193Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-A35EF288 correlationId=corr-7fac7db2-64ce-414d-8545-4a369ca4930b redelivered=true deliveryTag=1
+2026-10-31T21:59:45.196Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-A35EF288 correlationId=corr-7fac7db2-64ce-414d-8545-4a369ca4930b
+2026-10-31T21:59:45.198Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-D8C949E8 correlationId=corr-56069e12-5d36-4f2b-bdc9-06c3656049ab redelivered=false deliveryTag=2
+2026-10-31T21:59:48.199Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-D8C949E8 correlationId=corr-56069e12-5d36-4f2b-bdc9-06c3656049ab
+# B) Reinicio del broker con 3 mensajes pendientes (cola durable + mensajes persistentes)
+
+$ docker compose stop notification-worker 2>&1 | tail -n 1
+ Container rabbitmq-pedidos-notification-worker-1 Stopped 
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Broker1","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-306480B2","correlationId":"corr-0973ead7-4377-4719-9113-2b7cfec548e4"}  -> HTTP 202 en 0.014466s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Broker2","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-D1B579E1","correlationId":"corr-97a34a4e-deff-49a5-ae1b-cfb785e867af"}  -> HTTP 202 en 0.015181s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Broker3","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-7BF33709","correlationId":"corr-44ca79c0-1cd6-4d44-b7a2-4b2999313f6f"}  -> HTTP 202 en 0.017511s
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	3	0	3	0
+
+$ docker compose restart rabbitmq 2>&1 | tail -n 1
+ Container rabbitmq Started 
+# Después del reinicio los 3 mensajes siguen en la cola
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	3	0	3	0
+
+$ docker compose logs --no-log-prefix orders-api | tail -n 3
+2026-10-31T22:00:15.283Z [orders-api] RabbitMQ no disponible (intento 4): connect ECONNREFUSED 172.20.0.2:5672
+2026-10-31T22:00:18.287Z [orders-api] RabbitMQ no disponible (intento 5): connect ECONNREFUSED 172.20.0.2:5672
+2026-10-31T22:00:21.349Z [orders-api] Conectado a RabbitMQ (amqp://***@rabbitmq:5672). Cola "pedidos" declarada (durable=true)
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Broker4","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-270F689E","correlationId":"corr-bae99ab5-1259-4dbd-8f02-c770ff380ebe"}  -> HTTP 202 en 0.016291s
+
+$ docker compose start notification-worker 2>&1 | tail -n 1
+ Container rabbitmq-pedidos-notification-worker-1 Started 
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	0	0	0	1
+
+$ docker compose logs --no-log-prefix --since 2026-10-31T22:00:58Z notification-worker | grep -E 'Mensaje recibido|ACK'
+2026-10-31T22:01:01.626Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-306480B2 correlationId=corr-0973ead7-4377-4719-9113-2b7cfec548e4 redelivered=false deliveryTag=1
+2026-10-31T22:01:04.629Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-306480B2 correlationId=corr-0973ead7-4377-4719-9113-2b7cfec548e4
+2026-10-31T22:01:04.631Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-D1B579E1 correlationId=corr-97a34a4e-deff-49a5-ae1b-cfb785e867af redelivered=false deliveryTag=2
+2026-10-31T22:01:07.634Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-D1B579E1 correlationId=corr-97a34a4e-deff-49a5-ae1b-cfb785e867af
+2026-10-31T22:01:07.636Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-7BF33709 correlationId=corr-44ca79c0-1cd6-4d44-b7a2-4b2999313f6f redelivered=false deliveryTag=3
+2026-10-31T22:01:10.638Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-7BF33709 correlationId=corr-44ca79c0-1cd6-4d44-b7a2-4b2999313f6f
+2026-10-31T22:01:10.641Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-270F689E correlationId=corr-bae99ab5-1259-4dbd-8f02-c770ff380ebe redelivered=false deliveryTag=4
+2026-10-31T22:01:13.644Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-270F689E correlationId=corr-bae99ab5-1259-4dbd-8f02-c770ff380ebe
+
+# Verificación posterior: Recupera1 (ORD-E3E32A33) ya se había confirmado antes del docker kill; Recupera2 (ORD-A35EF288) era el mensaje en proceso sin ACK
+$ docker compose logs --no-log-prefix notification-worker | grep -E 'ORD-E3E32A33|ORD-A35EF288' | grep -E 'Mensaje recibido|ACK'
+2026-10-31T21:59:26.052Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-E3E32A33 correlationId=corr-ac9becea-6b2e-42f1-98d7-0e827d0bf99a redelivered=false deliveryTag=5
+2026-10-31T21:59:29.055Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-E3E32A33 correlationId=corr-ac9becea-6b2e-42f1-98d7-0e827d0bf99a
+2026-10-31T21:59:29.056Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-A35EF288 correlationId=corr-7fac7db2-64ce-414d-8545-4a369ca4930b redelivered=false deliveryTag=6
+2026-10-31T21:59:42.193Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-A35EF288 correlationId=corr-7fac7db2-64ce-414d-8545-4a369ca4930b redelivered=true deliveryTag=1
+2026-10-31T21:59:45.196Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-A35EF288 correlationId=corr-7fac7db2-64ce-414d-8545-4a369ca4930b

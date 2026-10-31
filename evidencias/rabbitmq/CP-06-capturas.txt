@@ -1,0 +1,29 @@
+# CP-06 (RabbitMQ) - trazabilidad de corr-CP06-captura-165501 - re-ejecución 2026-10-31 16:55:01 (hora local). Captura: img/11-cp06-trazabilidad.png
+
+$ curl -s -o /dev/null -u admin:admin -X PUT -H 'content-type: application/json' http://localhost:15672/api/traces/%2F/cp06c -d '{"format":"text","pattern":"#","tracer_connection_username":"admin","tracer_connection_password":"admin"}' -w 'Traza del broker cp06c creada -> HTTP %{http_code}\n'
+Traza del broker cp06c creada -> HTTP 201
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json' -H 'X-Correlation-Id: corr-CP06-captura-165501' -d '{"customerName":"Laura","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-7E5D3A5B","correlationId":"corr-CP06-captura-165501"}  -> HTTP 202 en 0.052622s
+# 1) API (productor)
+
+$ docker compose logs --no-log-prefix orders-api | grep corr-CP06-captura-165501
+2026-10-31T21:55:03.758Z [orders-api] Pedido recibido y publicado en cola "pedidos" orderId=ORD-7E5D3A5B correlationId=corr-CP06-captura-165501 customer="Laura"
+# 2) Broker (bitácora de rabbitmq_tracing): publicación y entrega
+
+$ docker exec rabbitmq cat /var/tmp/rabbitmq-tracing/cp06c.log | awk -v RS='={20,}' -v c=corr-CP06-captura-165501 'index($0, c)' | grep -E 'Message (published|received)|Connection|Routed queues|correlation_id|message_id'
+2026-10-31T21:55:03.756+00:00: Message published
+Connection:   172.20.0.3:40902 -> 172.20.0.2:5672
+Routed queues: [<<"pedidos">>]
+               {<<"message_id">>,longstr,<<"ORD-7E5D3A5B">>},
+               {<<"correlation_id">>,longstr,<<"corr-CP06-captura-165501">>},
+2026-10-31T21:55:03.757+00:00: Message received
+Connection:   172.20.0.4:58318 -> 172.20.0.2:5672
+               {<<"message_id">>,longstr,<<"ORD-7E5D3A5B">>},
+               {<<"correlation_id">>,longstr,<<"corr-CP06-captura-165501">>},
+# 3) Consumidor
+
+$ docker compose logs --no-log-prefix notification-worker | grep corr-CP06-captura-165501
+2026-10-31T21:55:03.758Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-7E5D3A5B correlationId=corr-CP06-captura-165501 redelivered=false deliveryTag=4
+2026-10-31T21:55:03.758Z [notification-worker@b13fff1de7b5] Contenido: {"type":"ProcessOrder","orderId":"ORD-7E5D3A5B","correlationId":"corr-CP06-captura-165501","customerName":"Laura","product":"Libro de arquitectura","quantity":1,"createdAt":"2026-10-31T21:55:03.730Z"}
+2026-10-31T21:55:06.759Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-7E5D3A5B correlationId=corr-CP06-captura-165501

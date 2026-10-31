@@ -1,0 +1,45 @@
+# CP-11 (RabbitMQ) - re-ejecución 2026-10-31 16:55:42 (hora local). Capturas: img/12-cp11-terminal-fifo.png, img/13-cp11-cola-vaciada.png
+
+$ docker compose stop notification-worker 2>&1 | tail -n 1
+ Container rabbitmq-pedidos-notification-worker-1 Stopped 
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"SinWorker1","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-464A8196","correlationId":"corr-09a3c078-915c-44ba-bf9e-c157225672d5"}  -> HTTP 202 en 0.015697s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"SinWorker2","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-6BECF6C8","correlationId":"corr-de71a3e0-6667-4817-8486-860f26f7bf34"}  -> HTTP 202 en 0.009025s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"SinWorker3","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-43F8F84E","correlationId":"corr-5e1304bd-9385-44e9-81be-cadb35b66ccc"}  -> HTTP 202 en 0.008422s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"SinWorker4","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-2BFAB021","correlationId":"corr-4432422b-7827-4d1b-8c80-bfcf37c0ef3a"}  -> HTTP 202 en 0.010089s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"SinWorker5","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-38323700","correlationId":"corr-fad2a297-4910-4c54-b0ff-9a251cb85152"}  -> HTTP 202 en 0.009750s
+# Con el worker apagado los mensajes esperan en la cola
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	5	0	5	0
+
+$ docker compose start notification-worker 2>&1 | tail -n 1
+ Container rabbitmq-pedidos-notification-worker-1 Started 
+# Al iniciarse, el worker procesa los 5 mensajes en orden de publicación
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	0	0	0	1
+
+$ docker compose logs --no-log-prefix --since 2026-10-31T21:55:47Z notification-worker | grep -E 'Conectado|Mensaje recibido|ACK'
+2026-10-31T21:55:49.396Z [notification-worker@b13fff1de7b5] Conectado a RabbitMQ. Escuchando la cola "pedidos" (prefetch=1, ack manual, procesamiento=3000ms)
+2026-10-31T21:55:49.407Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-464A8196 correlationId=corr-09a3c078-915c-44ba-bf9e-c157225672d5 redelivered=false deliveryTag=1
+2026-10-31T21:55:52.412Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-464A8196 correlationId=corr-09a3c078-915c-44ba-bf9e-c157225672d5
+2026-10-31T21:55:52.416Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-6BECF6C8 correlationId=corr-de71a3e0-6667-4817-8486-860f26f7bf34 redelivered=false deliveryTag=2
+2026-10-31T21:55:55.420Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-6BECF6C8 correlationId=corr-de71a3e0-6667-4817-8486-860f26f7bf34
+2026-10-31T21:55:55.422Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-43F8F84E correlationId=corr-5e1304bd-9385-44e9-81be-cadb35b66ccc redelivered=false deliveryTag=3
+2026-10-31T21:55:58.422Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-43F8F84E correlationId=corr-5e1304bd-9385-44e9-81be-cadb35b66ccc
+2026-10-31T21:55:58.424Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-2BFAB021 correlationId=corr-4432422b-7827-4d1b-8c80-bfcf37c0ef3a redelivered=false deliveryTag=4
+2026-10-31T21:56:01.428Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-2BFAB021 correlationId=corr-4432422b-7827-4d1b-8c80-bfcf37c0ef3a
+2026-10-31T21:56:01.429Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-38323700 correlationId=corr-fad2a297-4910-4c54-b0ff-9a251cb85152 redelivered=false deliveryTag=5
+2026-10-31T21:56:04.432Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-38323700 correlationId=corr-fad2a297-4910-4c54-b0ff-9a251cb85152

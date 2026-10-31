@@ -35,8 +35,16 @@ function caso(c) {
   <h4>Evidencia</h4>
   ${(c.imgs || []).map(([f, t]) => img(f, t)).join('\n')}
   ${(c.logs || []).map(([f, t]) => log(f, t)).join('\n')}
+  ${c.extra ? `<h4>Capturas complementarias (re-ejecución del 31 de octubre de 2026)</h4>
+  <div class="note">${c.extra.nota}</div>
+  ${c.extra.imgs.map(([f, t]) => img(f, t)).join('\n')}
+  ${c.extra.logs.map(([f, t]) => log(f, t)).join('\n')}` : ''}
 </section>`;
 }
+
+// Las capturas complementarias repiten los mismos pasos del caso para dejar imagen de lo que en la
+// ejecución del 30 de octubre solo quedó en texto. Sus orderId son distintos y cada una tiene su propio log.
+const reejec = 'Se repitieron los pasos del caso sobre el mismo stack para tomar capturas de pantalla de la terminal y de la consola. Los identificadores (orderId, correlationId) son distintos a los de la ejecución principal; cada captura tiene su log en el archivo indicado.';
 
 // ---------------------------------------------------------------- RabbitMQ
 const R = 'RabbitMQ';
@@ -53,6 +61,11 @@ const casosRabbit = [
     estado: 'Cumple',
     analisis: 'Se usa 202 (Accepted) porque el pedido queda aceptado para procesamiento asíncrono, no procesado. La API valida la entrada antes de publicar: un pedido inválido nunca llega a la cola. Además de lo pedido, la respuesta incluye un <code>correlationId</code>.',
     logs: [['rabbitmq/CP-01.txt', 'Ejecución CP-01']],
+    extra: {
+      nota: `${reejec} Pedido válido <code>ORD-47977D81</code>: HTTP 202 en 0,062 s; los dos pedidos inválidos devolvieron HTTP 400. El log de orders-api registra la publicación y el rechazo, y el del worker la recepción y el ACK del mismo pedido.`,
+      imgs: [['rabbitmq/img/16-cp01-terminal-api.png', 'Terminal: POST /orders válido (202 Accepted), dos pedidos inválidos (400) y el pedido ORD-47977D81 en los logs de orders-api y del worker']],
+      logs: [['rabbitmq/CP-01-capturas.txt', 'Re-ejecución CP-01']],
+    },
   },
   {
     id: 'CP-02', anchor: 'r-cp02', nombre: 'Envío de mensaje a RabbitMQ', arq: R,
@@ -78,6 +91,11 @@ const casosRabbit = [
     estado: 'Cumple',
     analisis: 'El estado Unacked demuestra el ACK manual: RabbitMQ no borra el mensaje hasta que el worker lo confirma. El campo <code>redelivered=true</code> se explica porque la lectura de inspección de CP-02 (consola y API) devolvió el mensaje a la cola; RabbitMQ lo marca como reentregado aunque ningún consumidor lo haya procesado.',
     logs: [['rabbitmq/CP-03.txt', 'Ejecución CP-03']],
+    extra: {
+      nota: `${reejec} Para que el estado Unacked se pudiera capturar en la consola se dejaron 3 mensajes en la cola (Consumo1…3) antes de iniciar el worker: con <code>prefetch=1</code> y 3 s por mensaje, la cola pasó por Ready=2 / Unacked=1 y terminó en 0. El worker procesó los tres con <code>redelivered=false</code> y ACK 3 s después de cada recepción.`,
+      imgs: [['rabbitmq/img/10-cp03-unacked1.png', 'Consola RabbitMQ durante el procesamiento: Ready=2, Unacked=1, un consumidor, tasas Deliver (manual ack) y Consumer ack'], ['rabbitmq/img/09-cp03-terminal-consumo.png', 'Terminal: cola antes (Ready=3), durante (Unacked=1) y después (Total=0), y log completo del worker']],
+      logs: [['rabbitmq/CP-03-capturas.txt', 'Re-ejecución CP-03']],
+    },
   },
   {
     id: 'CP-06', anchor: 'r-cp06', nombre: 'Trazabilidad del flujo', arq: R,
@@ -90,6 +108,11 @@ const casosRabbit = [
     estado: 'Cumple',
     analisis: 'La bitácora del broker es evidencia independiente del código propio: muestra quién publicó (IP 172.20.0.4 = orders-api) y a quién se entregó (172.20.0.3 = worker), con las propiedades AMQP <code>message_id</code> y <code>correlation_id</code>. El correlationId puede venir del cliente (cabecera) o lo genera la API.',
     logs: [['rabbitmq/CP-06.txt', 'Ejecución CP-06']],
+    extra: {
+      nota: `${reejec} <code>ORD-7E5D3A5B</code> / <code>corr-CP06-captura-165501</code>: API 21:55:03.758 "publicado en cola"; broker 21:55:03.756 "Message published" y 21:55:03.757 "Message received", con <code>message_id</code> y <code>correlation_id</code>; worker 21:55:03.758 "Mensaje recibido" y 21:55:06.759 "ACK confirmado" (UTC).`,
+      imgs: [['rabbitmq/img/11-cp06-trazabilidad.png', 'Terminal: el mismo correlationId en el log de orders-api, en la bitácora rabbitmq_tracing del broker y en el log del worker']],
+      logs: [['rabbitmq/CP-06-capturas.txt', 'Re-ejecución CP-06']],
+    },
   },
   {
     id: 'CP-07', anchor: 'r-cp07', nombre: 'Responsive: la API responde sin esperar al consumidor', arq: R,
@@ -141,6 +164,11 @@ const casosRabbit = [
     estado: 'Cumple',
     analisis: 'Productor y consumidor no necesitan estar activos al mismo tiempo: la cola desacopla en el tiempo. Con <code>prefetch=1</code> los mensajes se procesan uno a uno.',
     logs: [['rabbitmq/CP-11.txt', 'Ejecución CP-11']],
+    extra: {
+      nota: `${reejec} Con el worker detenido se publicaron 5 pedidos (SinWorker1…5; Ready=5, consumers=0). Al iniciarlo, procesó ORD-464A8196, ORD-6BECF6C8, ORD-43F8F84E, ORD-2BFAB021 y ORD-38323700 en el orden de publicación (deliveryTag 1…5), uno cada 3 s. El gráfico de la consola muestra la cola subiendo a 5 y vaciándose.`,
+      imgs: [['rabbitmq/img/12-cp11-terminal-fifo.png', 'Terminal: 5 pedidos con el worker apagado (Ready=5) y procesamiento en orden al iniciarlo'], ['rabbitmq/img/13-cp11-cola-vaciada.png', 'Consola RabbitMQ: la cola pedidos sube a 5 mensajes con el worker apagado y se vacía cuando este arranca']],
+      logs: [['rabbitmq/CP-11-capturas.txt', 'Re-ejecución CP-11']],
+    },
   },
   {
     id: 'CP-10', anchor: 'r-cp10', nombre: 'Elastic: distribución de carga con múltiples consumidores', arq: R,
@@ -166,6 +194,11 @@ const casosRabbit = [
     estado: 'Cumple',
     analisis: 'El ACK manual garantiza entrega <em>al menos una vez</em>: si el consumidor muere sin confirmar, el broker reentrega el mensaje. La cola durable, los mensajes persistentes, el volumen de datos y el <code>hostname</code> fijo del broker hacen que los mensajes sobrevivan a un reinicio. La reconexión automática de la API evita reiniciarla manualmente. Riesgo observado: el mensaje reentregado se procesa dos veces (aquí, notificación duplicada), por lo que en producción el consumidor debería ser idempotente.',
     logs: [['rabbitmq/CP-12.txt', 'Ejecución CP-12']],
+    extra: {
+      nota: `${reejec} A) Recupera1 (ORD-E3E32A33) ya estaba confirmado cuando se ejecutó <code>docker kill</code>; Recupera2 (ORD-A35EF288) estaba en proceso sin ACK. Tras el kill la cola quedó en Ready=2 (Recupera2 + Recupera3) y, al levantar el worker, ORD-A35EF288 se reentregó con <code>redelivered=true</code>. B) Ready=3 antes y después de <code>docker compose restart rabbitmq</code>; la consola, recargada después del reinicio, muestra los 3 mensajes como persistentes. La API se reconectó sola, Broker4 fue aceptado (202) y el worker procesó los 4. En un primer intento de esta re-ejecución el worker alcanzó a confirmar el mensaje antes del <code>kill</code> y no hubo nada que reentregar; se ajustó el momento del <code>kill</code> y se repitió el caso completo (es la corrida que se muestra). La ventana de terminal no alcanzó a mostrar las dos primeras líneas; el registro completo está en el archivo de texto.`,
+      imgs: [['rabbitmq/img/14-cp12-terminal-recuperacion.png', 'Terminal: A) kill del worker con un mensaje sin ACK y reentrega con redelivered=true; B) reinicio del broker con 3 mensajes pendientes, reconexión de la API y procesamiento de los 4'], ['rabbitmq/img/15-cp12-cola-tras-reinicio-broker.png', 'Consola RabbitMQ después de reiniciar el broker: cola pedidos durable con Ready=3 y Persistent=3']],
+      logs: [['rabbitmq/CP-12-capturas.txt', 'Re-ejecución CP-12']],
+    },
   },
 ];
 
@@ -211,6 +244,11 @@ const casosKafka = [
     analisis: 'Cada grupo mantiene su propio offset, así que un evento se entrega una vez a cada grupo (publicación/suscripción). El grupo <code>console-consumer-68130</code> lo creó la herramienta de inspección usada en CP-04; no pertenece al sistema.',
     imgs: [['kafka/img/06-cp05-consumer-groups.png', 'Kafka UI: tres consumer groups distintos'], ['kafka/img/07-cp05-grupo-billing-offsets.png', 'Kafka UI: billing-service-group, 3 particiones asignadas y LAG 0']],
     logs: [['kafka/CP-05.txt', 'Ejecución CP-05']],
+    extra: {
+      nota: `${reejec} Pedido <code>ORD-904F113A</code> (Valentina, 2 × 85000) publicado en <code>partition=1 offset=11</code>. Cada consumidor registró el mismo eventId y ejecutó su acción: inventory "Inventario reservado: 2 x Libro de arquitectura", billing "Factura generada por $170000", notification "Notificación enviada a Valentina". Debajo de cada log se ve su consumer group con LAG 0.`,
+      imgs: [['kafka/img/14-cp05-log-inventory-consumer.png', 'Terminal: log de inventory-consumer para ORD-904F113A y estado de inventory-service-group'], ['kafka/img/15-cp05-log-billing-consumer.png', 'Terminal: log de billing-consumer para ORD-904F113A y estado de billing-service-group'], ['kafka/img/16-cp05-log-notification-consumer.png', 'Terminal: log de notification-consumer para ORD-904F113A y estado de notification-service-group']],
+      logs: [['kafka/CP-05-capturas.txt', 'Re-ejecución CP-05']],
+    },
   },
   {
     id: 'CP-06', anchor: 'k-cp06', nombre: 'Trazabilidad del flujo', arq: K,
@@ -223,6 +261,11 @@ const casosKafka = [
     estado: 'Cumple',
     analisis: 'La pareja (partición, offset) identifica de forma única el registro en el broker y coincide en los cuatro servicios. Junto con el correlationId permite reconstruir el flujo completo y ver que los tres consumidores reaccionaron en paralelo e independientemente.',
     logs: [['kafka/CP-06.txt', 'Ejecución CP-06']],
+    extra: {
+      nota: `${reejec} <code>ORD-BDD2A01A</code> / <code>corr-CP06-captura-164914</code>: API "publicado partition=0 offset=16" (21:49:14.574 UTC); broker Partition:0 Offset:16 con cabeceras <code>eventType:OrderCreated,correlationId:corr-CP06-captura-164914</code>; inventory, billing y notification lo recibieron en partition=0 offset=16 (21:49:14.578–.580) y completaron su acción 1 s después.`,
+      imgs: [['kafka/img/17-cp06-trazabilidad.png', 'Terminal: el mismo correlationId en orders-api, en el registro del tópico (partición, offset, cabeceras, key) y en los tres consumidores']],
+      logs: [['kafka/CP-06-capturas.txt', 'Re-ejecución CP-06']],
+    },
   },
   {
     id: 'CP-07', anchor: 'k-cp07', nombre: 'Responsive: la API responde sin esperar a los consumidores', arq: K,
@@ -235,6 +278,11 @@ const casosKafka = [
     estado: 'Cumple',
     analisis: 'El LAG mide cuántos eventos publicados aún no procesó cada grupo: que sea mayor que 0 después de responder demuestra que la API no esperó. Cada grupo avanza a su propio ritmo (notification iba algo más adelantado).',
     logs: [['kafka/CP-07.txt', 'Ejecución CP-07']],
+    extra: {
+      nota: `${reejec} Las 10 respuestas fueron HTTP 202 en 7–21 ms. Justo después el LAG era 9 en inventory (4 + 1 + 4), 8 en billing y 5 en notification; Kafka UI, abierto en ese momento, muestra <em>Total lag 9</em> para inventory-service-group. Los tres grupos llegaron a LAG 0 7 s después.`,
+      imgs: [['kafka/img/18-cp07-terminal-lag.png', 'Terminal: 10 pedidos respondidos en milisegundos, LAG por partición inmediatamente después y LAG 0 a los 7 s'], ['kafka/img/19-cp07-kafka-ui-lag.png', 'Kafka UI justo después de los 10 pedidos: inventory-service-group con Total lag 9']],
+      logs: [['kafka/CP-07-capturas.txt', 'Re-ejecución CP-07']],
+    },
   },
   {
     id: 'CP-08', anchor: 'k-cp08', nombre: 'Message-driven: no existe comunicación directa', arq: K,
@@ -298,8 +346,13 @@ const casosKafka = [
     obtenido: 'A) LAG 3 mientras estaba caído; al volver procesó los 3 (p2 o7, p2 o8, p0 o12). Tardó ~26 s en unirse porque el broker esperó a que expirara la sesión del miembro anterior, que murió sin despedirse. B) Offsets 15/10/9 antes y después del reinicio; el grupo billing conservó sus offsets confirmados (LAG 3); la API publicó Broker4 tras el reinicio; billing procesó los 4. C) Una instancia de inventario procesó el evento p0 o14 (ORD-05CEDD1E) 0,2 s antes de que el broker se detuviera, pero el commit de su offset no llegó: el grupo quedó con LAG=1. Al reiniciar esa instancia, el evento se volvió a entregar y procesar (duplicado) y el LAG quedó en 0.',
     estado: 'Cumple',
     analisis: 'No hubo pérdida de eventos: el log es persistente (volumen <code>kafka-data</code>) y cada grupo retoma desde su último offset confirmado. La parte C muestra la semántica <em>al menos una vez</em> de Kafka con commit posterior al procesamiento: si el commit se pierde, el evento se reprocesa. Es un hallazgo relevante de QA: los consumidores deben ser idempotentes (por ejemplo, registrando los <code>eventId</code> ya procesados) para que un duplicado no reserve inventario dos veces.',
-    imgs: [['kafka/img/13-cp12-topico-tras-reinicio.png', 'Kafka UI: el tópico conserva sus mensajes tras el reinicio del broker'], ['kafka/img/12-cp12-estado-final-grupos.png', 'Kafka UI: estado final de los cuatro grupos (STABLE)']],
+    imgs: [['kafka/img/13-cp12-topico-tras-reinicio.png', 'Kafka UI: el tópico conserva sus mensajes tras el reinicio del broker']],
     logs: [['kafka/CP-12.txt', 'Ejecución CP-12 (A y B)'], ['kafka/CP-12-analisis-lag.txt', 'CP-12 (C): análisis del LAG residual y reentrega']],
+    extra: {
+      nota: `${reejec} Se repitió la parte B. Con billing-consumer detenido se publicaron Broker1…3; los offsets del tópico (25/13/13) y el offset confirmado del grupo billing (22 en la partición 0, LAG 3) fueron los mismos antes y después de <code>docker compose restart kafka</code>. La API publicó Broker4 tras el reinicio y billing, al volver, facturó los 4 pedidos (ORD-C50C7B78, ORD-B5A0F0B9, ORD-11EF65D2, ORD-EF8487B9): LAG final 0. Observación: billing-consumer no terminó dentro de los 10 s de gracia de <code>docker compose stop</code> (salida 137), así que su sesión siguió registrada en el grupo hasta expirar; por eso la captura con LAG 3 muestra Members=1 aunque el contenedor estaba detenido.`,
+      imgs: [['kafka/img/20-cp12-terminal-reinicio-broker.png', 'Terminal: offsets del tópico y del grupo billing antes y después del reinicio del broker, y recuperación de billing'], ['kafka/img/21-cp12-billing-lag3-tras-reinicio.png', 'Kafka UI después del reinicio del broker: billing-service-group conserva su offset (22) con LAG 3 en la partición 0'], ['kafka/img/22-cp12-billing-lag0-recuperado.png', 'Kafka UI: billing-service-group con LAG 0 después de procesar los 4 eventos']],
+      logs: [['kafka/CP-12-capturas.txt', 'Re-ejecución CP-12 (B)']],
+    },
   },
 ];
 
@@ -371,7 +424,7 @@ const html = `<!doctype html>
     <div class="sub">Sistema de procesamiento de pedidos con RabbitMQ y Apache Kafka: montaje, ejecución de los casos CP-01 a CP-12 y evidencia técnica</div>
     <table>
       <tr><th>Integrantes</th><td>Santiago Betancur<br>Diego Alzate<br>Carlos Mendez<br>Heyner Mena</td></tr>
-      <tr><th>Fecha de ejecución de las pruebas</th><td>30 de octubre de 2026</td></tr>
+      <tr><th>Fecha de ejecución de las pruebas</th><td>30 de octubre de 2026 (capturas complementarias: 31 de octubre de 2026)</td></tr>
       <tr><th>Fecha de entrega</th><td>1 de noviembre de 2026</td></tr>
       <tr><th>Código fuente</th><td><a href="https://github.com/Xantyagoh/pruebas-integracion-mensajes-eventos">https://github.com/Xantyagoh/pruebas-integracion-mensajes-eventos</a> · también se entrega <code>pruebas-integracion-mensajes-eventos.zip</code> (código fuente y <code>docker-compose.yml</code> de cada arquitectura)</td></tr>
     </table>
@@ -401,7 +454,7 @@ const html = `<!doctype html>
 </ol>
 
 <h2 id="resumen">1. Resumen de resultados</h2>
-<p>Se implementaron dos sistemas independientes de procesamiento de pedidos, uno basado en mensajes (RabbitMQ) y otro basado en eventos (Kafka). Cada componente corre en su propio contenedor y se levanta con Docker Compose. Los casos se ejecutaron con los scripts <code>rabbitmq/pruebas.sh</code> y <code>kafka/pruebas.sh</code>, que guardan la salida real de cada paso en <code>evidencias/</code>. Las capturas de la consola de RabbitMQ y de Kafka UI se tomaron con el navegador durante esa misma ejecución.</p>
+<p>Se implementaron dos sistemas independientes de procesamiento de pedidos, uno basado en mensajes (RabbitMQ) y otro basado en eventos (Kafka). Cada componente corre en su propio contenedor y se levanta con Docker Compose. Los casos se ejecutaron con los scripts <code>rabbitmq/pruebas.sh</code> y <code>kafka/pruebas.sh</code>, que guardan la salida real de cada paso en <code>evidencias/</code>. Las capturas de la consola de RabbitMQ y de Kafka UI se tomaron con el navegador durante esa misma ejecución. Los casos que en esa ejecución solo dejaron evidencia en texto se repitieron el 31 de octubre sobre el mismo stack para tomar capturas de la terminal y de las consolas; cada caso las muestra en un apartado "Capturas complementarias", con su propio log (<code>evidencias/&lt;arquitectura&gt;/CP-XX-capturas.txt</code>).</p>
 <table class="grid">
   <thead><tr><th>ID</th><th>Caso / propiedad</th><th>RabbitMQ</th><th>Kafka</th></tr></thead>
   ${resumen.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="estado ${r[2].startsWith('Cumple') ? 'ok' : ''}">${r[2]}</td><td class="estado ${r[3].startsWith('Cumple') ? 'ok' : ''}">${r[3]}</td></tr>`).join('')}
@@ -467,6 +520,8 @@ ${casosKafka.map(caso).join('\n')}
   <li><strong>Las aserciones sobre sistemas asíncronos necesitan esperas explícitas.</strong> No basta un <code>sleep</code> fijo: los scripts esperan condiciones (consumers=N, Total=0, LAG=0) con tiempo límite. Un error en la función que calculaba el LAG (trataba como 0 un grupo sin offsets confirmados) hizo que la primera corrida del consumidor posterior terminara antes de tiempo; se detectó porque el conteo de eventos no cuadraba con el tamaño del log, se corrigió y se repitió la prueba.</li>
   <li><strong>Las propias herramientas de inspección alteran lo observado.</strong> Leer un mensaje desde la consola de RabbitMQ lo devuelve a la cola marcado como <code>redelivered</code> (CP-03), y <code>kafka-console-consumer</code> crea un consumer group temporal que aparece en Kafka UI (CP-05).</li>
   <li><strong>Los tiempos de rebalanceo de Kafka</strong> (unión al grupo, expiración de sesión de un miembro caído) hacen que las pruebas de Kafka sean más lentas y menos deterministas que las de RabbitMQ.</li>
+  <li><strong>Capturar un estado transitorio exige controlar los tiempos.</strong> Al repetir los casos para tomar capturas, el estado Unacked de RabbitMQ dura solo los 3 s de procesamiento de un mensaje, y el LAG de Kafka unos 7–10 s. En el primer intento de CP-12 A el worker alcanzó a confirmar el mensaje antes del <code>docker kill</code>, así que no hubo nada que reentregar y la prueba no ejercitó lo que debía; se ajustó el momento del <code>kill</code> y se repitió. Lección: un resultado "sin pérdidas" solo vale si se comprueba que el escenario de fallo realmente ocurrió.</li>
+  <li><strong>El apagado ordenado de un consumidor no siempre termina a tiempo.</strong> En la re-ejecución de CP-12 B, billing-consumer recibió SIGTERM pero no salió del grupo dentro de los 10 s de gracia de Docker (salida 137); su sesión quedó registrada hasta expirar y Kafka UI siguió mostrando un miembro con el contenedor detenido.</li>
   <li><strong>El orden de arranque.</strong> <code>depends_on</code> no espera a que el broker esté listo: fueron necesarios healthchecks, el contenedor <code>kafka-init</code> para crear el tópico antes que los consumidores, y reintentos de conexión en el código.</li>
   <li><strong>Entorno:</strong> el puerto 3000 estaba ocupado en el equipo; se hizo configurable (sección 1). En Windows, Git Bash reescribía las rutas de los contenedores (<code>/var/tmp</code>), lo que se resolvió con <code>MSYS_NO_PATHCONV=1</code>.</li>
 </ul>
@@ -510,10 +565,10 @@ curl -X POST http://localhost:3010/orders -H "Content-Type: application/json" \\
 <h3>7.2 Archivos de evidencia</h3>
 <table class="grid">
   <thead><tr><th>Ruta</th><th>Contenido</th></tr></thead>
-  <tr><td><code>evidencias/rabbitmq/*.txt</code></td><td>Salida de cada caso (entorno, CP-01…CP-12) y logs completos de orders-api, notification-worker y rabbitmq.</td></tr>
-  <tr><td><code>evidencias/rabbitmq/img/</code></td><td>Capturas de la consola de administración de RabbitMQ.</td></tr>
-  <tr><td><code>evidencias/kafka/*.txt</code></td><td>Salida de cada caso (entorno, CP-01…CP-12, CP-11-posterior, CP-12-analisis-lag, CP-01-postman) y logs completos de todos los servicios y del broker.</td></tr>
-  <tr><td><code>evidencias/kafka/img/</code></td><td>Capturas de Kafka UI y de Postman (CP-01).</td></tr>
+  <tr><td><code>evidencias/rabbitmq/*.txt</code></td><td>Salida de cada caso (entorno, CP-01…CP-12), logs completos de orders-api, notification-worker y rabbitmq, y logs de las re-ejecuciones con capturas (<code>CP-01/03/06/11/12-capturas.txt</code>).</td></tr>
+  <tr><td><code>evidencias/rabbitmq/img/</code></td><td>Capturas de la consola de administración de RabbitMQ y de la terminal.</td></tr>
+  <tr><td><code>evidencias/kafka/*.txt</code></td><td>Salida de cada caso (entorno, CP-01…CP-12, CP-11-posterior, CP-12-analisis-lag, CP-01-postman), logs completos de todos los servicios y del broker, y logs de las re-ejecuciones con capturas (<code>CP-05/06/07/12-capturas.txt</code>).</td></tr>
+  <tr><td><code>evidencias/kafka/img/</code></td><td>Capturas de Kafka UI, de Postman (CP-01) y de la terminal.</td></tr>
 </table>
 <p>Cada archivo de caso empieza con la fecha y hora de ejecución. Los <code>orderId</code>, <code>eventId</code> y <code>correlationId</code> citados en este documento pueden buscarse en los logs completos para verificar la trazabilidad.</p>
 </body></html>`;

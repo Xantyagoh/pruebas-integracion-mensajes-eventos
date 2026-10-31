@@ -1,0 +1,46 @@
+# CP-03 (RabbitMQ) - re-ejecución 2026-10-31 16:54:06 (hora local). Capturas: img/09-cp03-terminal-consumo.png, img/10-cp03-unacked1.png
+
+$ docker compose stop notification-worker 2>&1 | tail -n 1
+ Container rabbitmq-pedidos-notification-worker-1 Stopped 
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Consumo1","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-A3B2E3B0","correlationId":"corr-5ad607b6-ef9f-4746-82f1-12dcb1242514"}  -> HTTP 202 en 0.023431s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Consumo2","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-FC647B14","correlationId":"corr-24056ba9-76d2-4892-ae6b-0f6ecd46772e"}  -> HTTP 202 en 0.007713s
+
+$ curl -s -X POST http://localhost:3010/orders -H 'Content-Type: application/json'  -d '{"customerName":"Consumo3","product":"Libro de arquitectura","quantity":1}' -w '  -> HTTP %{http_code} en %{time_total}s\n'
+{"status":"accepted","message":"Pedido recibido y enviado a RabbitMQ","orderId":"ORD-9D7F7A1E","correlationId":"corr-8ca506e6-2dea-4532-90a0-4e4865b2e108"}  -> HTTP 202 en 0.011106s
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	3	0	3	0
+
+$ docker compose start notification-worker 2>&1 | tail -n 1
+ Container rabbitmq-pedidos-notification-worker-1 Started 
+# Durante el procesamiento: un mensaje entregado y sin confirmar (Unacked=1)
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	1	1	2	1
+# Después de los ACK manuales: la cola queda vacía
+
+$ docker exec rabbitmq rabbitmqctl list_queues -q name durable messages_ready messages_unacknowledged messages consumers
+name	durable	messages_ready	messages_unacknowledged	messages	consumers
+pedidos	true	0	0	0	1
+
+$ docker compose logs --no-log-prefix --since 2026-10-31T21:54:22Z notification-worker
+2026-10-31T21:54:24.421Z [notification-worker@b13fff1de7b5] Iniciando worker
+2026-10-31T21:54:24.510Z [notification-worker@b13fff1de7b5] Conectado a RabbitMQ. Escuchando la cola "pedidos" (prefetch=1, ack manual, procesamiento=3000ms)
+2026-10-31T21:54:24.514Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-A3B2E3B0 correlationId=corr-5ad607b6-ef9f-4746-82f1-12dcb1242514 redelivered=false deliveryTag=1
+2026-10-31T21:54:24.514Z [notification-worker@b13fff1de7b5] Contenido: {"type":"ProcessOrder","orderId":"ORD-A3B2E3B0","correlationId":"corr-5ad607b6-ef9f-4746-82f1-12dcb1242514","customerName":"Consumo1","product":"Libro de arquitectura","quantity":1,"createdAt":"2026-10-31T21:54:09.554Z"}
+2026-10-31T21:54:24.514Z [notification-worker@b13fff1de7b5] Simulando envío de notificación a Consumo1...
+2026-10-31T21:54:27.522Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-A3B2E3B0 correlationId=corr-5ad607b6-ef9f-4746-82f1-12dcb1242514
+2026-10-31T21:54:27.528Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-FC647B14 correlationId=corr-24056ba9-76d2-4892-ae6b-0f6ecd46772e redelivered=false deliveryTag=2
+2026-10-31T21:54:27.528Z [notification-worker@b13fff1de7b5] Contenido: {"type":"ProcessOrder","orderId":"ORD-FC647B14","correlationId":"corr-24056ba9-76d2-4892-ae6b-0f6ecd46772e","customerName":"Consumo2","product":"Libro de arquitectura","quantity":1,"createdAt":"2026-10-31T21:54:09.708Z"}
+2026-10-31T21:54:27.528Z [notification-worker@b13fff1de7b5] Simulando envío de notificación a Consumo2...
+2026-10-31T21:54:30.530Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-FC647B14 correlationId=corr-24056ba9-76d2-4892-ae6b-0f6ecd46772e
+2026-10-31T21:54:30.531Z [notification-worker@b13fff1de7b5] Mensaje recibido orderId=ORD-9D7F7A1E correlationId=corr-8ca506e6-2dea-4532-90a0-4e4865b2e108 redelivered=false deliveryTag=3
+2026-10-31T21:54:30.531Z [notification-worker@b13fff1de7b5] Contenido: {"type":"ProcessOrder","orderId":"ORD-9D7F7A1E","correlationId":"corr-8ca506e6-2dea-4532-90a0-4e4865b2e108","customerName":"Consumo3","product":"Libro de arquitectura","quantity":1,"createdAt":"2026-10-31T21:54:09.865Z"}
+2026-10-31T21:54:30.531Z [notification-worker@b13fff1de7b5] Simulando envío de notificación a Consumo3...
+2026-10-31T21:54:33.536Z [notification-worker@b13fff1de7b5] Notificación enviada. ACK confirmado orderId=ORD-9D7F7A1E correlationId=corr-8ca506e6-2dea-4532-90a0-4e4865b2e108
