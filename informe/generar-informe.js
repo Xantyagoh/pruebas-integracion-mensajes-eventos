@@ -372,7 +372,7 @@ const html = `<!doctype html>
       <tr><th>Integrantes</th><td>Santiago Betancur<br>Diego Alzate<br>Carlos Mendez<br>Heyner Mena</td></tr>
       <tr><th>Fecha de ejecución de las pruebas</th><td>30 de octubre de 2026</td></tr>
       <tr><th>Fecha de entrega</th><td>1 de noviembre de 2026</td></tr>
-      <tr><th>Código fuente</th><td>Archivo <code>pruebas-integracion-mensajes-eventos.zip</code> entregado junto con este documento (código fuente y <code>docker-compose.yml</code> de cada arquitectura)</td></tr>
+      <tr><th>Código fuente</th><td><a href="https://github.com/Xantyagoh/pruebas-integracion-mensajes-eventos">https://github.com/Xantyagoh/pruebas-integracion-mensajes-eventos</a> · también se entrega <code>pruebas-integracion-mensajes-eventos.zip</code> (código fuente y <code>docker-compose.yml</code> de cada arquitectura)</td></tr>
     </table>
   </div>
   <div>
