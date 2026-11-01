@@ -12,7 +12,44 @@ const img = (rel, caption) => {
   const b64 = fs.readFileSync(path.join(EV, rel)).toString('base64');
   return `<figure><img src="data:image/png;base64,${b64}" alt="${esc(caption)}"><figcaption>${esc(caption)} <span class="src">(${esc(rel)})</span></figcaption></figure>`;
 };
-const log = (rel, title) => `<div class="log"><div class="logtitle">${esc(title || rel)} <span class="src">evidencias/${esc(rel)}</span></div><pre>${esc(read(rel).trim())}</pre></div>`;
+// En el PDF cada sección del log (bloque que empieza con "#") se resume a sus primeras y últimas
+// líneas más las que coincidan con `keep`; la salida completa queda en evidencias/ (repo y .zip).
+const LOG_HEAD = 3;
+const LOG_TAIL = 3;
+const KEEP = /redelivered=true|Connection refused|Reintentando|\[cola pedidos\]|HTTP\/1\.1 \d{3}|^\{"status"|Message (published|received)/;
+function excerpt(text, keep) {
+  const out = [];
+  let omitted = [];
+  // Omitir 1-3 líneas no ahorra espacio (el aviso ocupa una): en ese caso se dejan.
+  const flush = () => {
+    if (omitted.length > 3) out.push(`   … ${omitted.length} líneas omitidas …`);
+    else out.push(...omitted);
+    omitted = [];
+  };
+  const sections = [];
+  for (const line of text.split('\n')) {
+    if (line.startsWith('#') || !sections.length) sections.push([]);
+    sections[sections.length - 1].push(line);
+  }
+  for (const sec of sections) {
+    const [head, ...body] = sec[0].startsWith('#') ? sec : ['', ...sec];
+    if (head) out.push(head);
+    body.forEach((line, i) => {
+      if (i < LOG_HEAD || i >= body.length - LOG_TAIL || KEEP.test(line) || (keep && keep.test(line))) {
+        flush();
+        out.push(line);
+      } else omitted.push(line);
+    });
+    flush();
+  }
+  return out.join('\n');
+}
+const log = (rel, title, keep) => {
+  const full = read(rel).trim();
+  const text = excerpt(full, keep);
+  const note = text === full ? '' : ' · extracto; salida completa en el archivo';
+  return `<div class="log"><div class="logtitle">${esc(title || rel)} <span class="src">evidencias/${esc(rel)}${note}</span></div><pre>${esc(text)}</pre></div>`;
+};
 const ul = (items) => `<ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
 const ol = (items) => `<ol>${items.map((i) => `<li>${i}</li>`).join('')}</ol>`;
 
@@ -34,11 +71,11 @@ function caso(c) {
   </table>
   <h4>Evidencia</h4>
   ${(c.imgs || []).map(([f, t]) => img(f, t)).join('\n')}
-  ${(c.logs || []).map(([f, t]) => log(f, t)).join('\n')}
+  ${(c.logs || []).map(([f, t, k]) => log(f, t, k)).join('\n')}
   ${c.extra ? `<h4>Capturas complementarias (re-ejecución del 31 de octubre de 2026)</h4>
   <div class="note">${c.extra.nota}</div>
   ${c.extra.imgs.map(([f, t]) => img(f, t)).join('\n')}
-  ${c.extra.logs.map(([f, t]) => log(f, t)).join('\n')}` : ''}
+  ${c.extra.logs.map(([f, t, k]) => log(f, t, k)).join('\n')}` : ''}
 </section>`;
 }
 
@@ -78,7 +115,7 @@ const casosRabbit = [
     estado: 'Cumple',
     analisis: 'La cola es durable y el mensaje persistente, de modo que sobrevive a reinicios del broker (ver CP-12). La API publica con <em>publisher confirms</em>: solo responde 202 cuando RabbitMQ confirmó que recibió el mensaje, lo que evita aceptar pedidos que no llegaron al broker.',
     imgs: [['rabbitmq/img/03-cp02-cola-pedidos-ready1.png', 'Consola RabbitMQ: cola pedidos con Ready=1 y worker detenido'], ['rabbitmq/img/04-cp02-contenido-mensaje.png', 'Consola RabbitMQ: detalle de la cola y contenido del mensaje (Get messages)']],
-    logs: [['rabbitmq/CP-02.txt', 'Ejecución CP-02']],
+    logs: [['rabbitmq/CP-02.txt', 'Ejecución CP-02', /delivery_mode|message_id|correlation_id|app_id|"type"|"payload"/]],
   },
   {
     id: 'CP-03', anchor: 'r-cp03', nombre: 'Consumo de mensaje (RabbitMQ)', arq: R,
@@ -163,11 +200,11 @@ const casosRabbit = [
     obtenido: 'El worker se conectó a las 17:44:49.897 y procesó los 5 pedidos (ORD-64D9F560 … ORD-C208AFA0), uno cada 3 s, en el mismo orden de publicación. Cola final: Total=0.',
     estado: 'Cumple',
     analisis: 'Productor y consumidor no necesitan estar activos al mismo tiempo: la cola desacopla en el tiempo. Con <code>prefetch=1</code> los mensajes se procesan uno a uno.',
-    logs: [['rabbitmq/CP-11.txt', 'Ejecución CP-11']],
+    logs: [['rabbitmq/CP-11.txt', 'Ejecución CP-11', /Mensaje recibido|Conectado a RabbitMQ/]],
     extra: {
       nota: `${reejec} Con el worker detenido se publicaron 5 pedidos (SinWorker1…5; Ready=5, consumers=0). Al iniciarlo, procesó ORD-464A8196, ORD-6BECF6C8, ORD-43F8F84E, ORD-2BFAB021 y ORD-38323700 en el orden de publicación (deliveryTag 1…5), uno cada 3 s. El gráfico de la consola muestra la cola subiendo a 5 y vaciándose.`,
       imgs: [['rabbitmq/img/12-cp11-terminal-fifo.png', 'Terminal: 5 pedidos con el worker apagado (Ready=5) y procesamiento en orden al iniciarlo'], ['rabbitmq/img/13-cp11-cola-vaciada.png', 'Consola RabbitMQ: la cola pedidos sube a 5 mensajes con el worker apagado y se vacía cuando este arranca']],
-      logs: [['rabbitmq/CP-11-capturas.txt', 'Re-ejecución CP-11']],
+      logs: [['rabbitmq/CP-11-capturas.txt', 'Re-ejecución CP-11', /Mensaje recibido/]],
     },
   },
   {
@@ -243,7 +280,7 @@ const casosKafka = [
     estado: 'Cumple',
     analisis: 'Cada grupo mantiene su propio offset, así que un evento se entrega una vez a cada grupo (publicación/suscripción). El grupo <code>console-consumer-68130</code> lo creó la herramienta de inspección usada en CP-04; no pertenece al sistema.',
     imgs: [['kafka/img/06-cp05-consumer-groups.png', 'Kafka UI: tres consumer groups distintos'], ['kafka/img/07-cp05-grupo-billing-offsets.png', 'Kafka UI: billing-service-group, 3 particiones asignadas y LAG 0']],
-    logs: [['kafka/CP-05.txt', 'Ejecución CP-05']],
+    logs: [['kafka/CP-05.txt', 'Ejecución CP-05', /topic=orders\.events partition/]],
     extra: {
       nota: `${reejec} Pedido <code>ORD-904F113A</code> (Valentina, 2 × 85000) publicado en <code>partition=1 offset=11</code>. Cada consumidor registró el mismo eventId y ejecutó su acción: inventory "Inventario reservado: 2 x Libro de arquitectura", billing "Factura generada por $170000", notification "Notificación enviada a Valentina". Debajo de cada log se ve su consumer group con LAG 0.`,
       imgs: [['kafka/img/14-cp05-log-inventory-consumer.png', 'Terminal: log de inventory-consumer para ORD-904F113A y estado de inventory-service-group'], ['kafka/img/15-cp05-log-billing-consumer.png', 'Terminal: log de billing-consumer para ORD-904F113A y estado de billing-service-group'], ['kafka/img/16-cp05-log-notification-consumer.png', 'Terminal: log de notification-consumer para ORD-904F113A y estado de notification-service-group']],
@@ -264,7 +301,7 @@ const casosKafka = [
     extra: {
       nota: `${reejec} <code>ORD-BDD2A01A</code> / <code>corr-CP06-captura-164914</code>: API "publicado partition=0 offset=16" (21:49:14.574 UTC); broker Partition:0 Offset:16 con cabeceras <code>eventType:OrderCreated,correlationId:corr-CP06-captura-164914</code>; inventory, billing y notification lo recibieron en partition=0 offset=16 (21:49:14.578–.580) y completaron su acción 1 s después.`,
       imgs: [['kafka/img/17-cp06-trazabilidad.png', 'Terminal: el mismo correlationId en orders-api, en el registro del tópico (partición, offset, cabeceras, key) y en los tres consumidores']],
-      logs: [['kafka/CP-06-capturas.txt', 'Re-ejecución CP-06']],
+      logs: [['kafka/CP-06-capturas.txt', 'Re-ejecución CP-06', /Evento recibido/]],
     },
   },
   {
@@ -321,7 +358,7 @@ const casosKafka = [
     estado: 'Cumple',
     analisis: 'Kafka conserva los eventos aunque ya los hayan leído otros grupos (log persistente con retención), a diferencia de una cola. Un grupo nuevo puede reconstruir toda la historia. Nota de ejecución: la primera corrida de la parte B se detuvo antes de tiempo por un error en la función <code>lag()</code> del script (no contaba el LAG de un grupo sin offsets confirmados); se corrigió, se eliminó el grupo de auditoría y la parte B se repitió completa (archivo <code>CP-11-posterior.txt</code>).',
     imgs: [['kafka/img/10-cp10-cp11-grupos.png', 'Kafka UI: aparece audit-service-group junto a los grupos funcionales']],
-    logs: [['kafka/CP-11.txt', 'Ejecución CP-11 (A): billing retoma los eventos pendientes'], ['kafka/CP-11-posterior.txt', 'Ejecución CP-11 (B): consumidor posterior lee el log desde el inicio']],
+    logs: [['kafka/CP-11.txt', 'Ejecución CP-11 (A): billing retoma los eventos pendientes', /Evento recibido/], ['kafka/CP-11-posterior.txt', 'Ejecución CP-11 (B): consumidor posterior lee el log desde el inicio', /key=ORD-(40AECA0F|41652E7F|2BAF2935)/]],
   },
   {
     id: 'CP-10', anchor: 'k-cp10', nombre: 'Elastic: distribución de carga con varias instancias del mismo grupo', arq: K,
@@ -351,7 +388,7 @@ const casosKafka = [
     extra: {
       nota: `${reejec} Se repitió la parte B. Con billing-consumer detenido se publicaron Broker1…3; los offsets del tópico (25/13/13) y el offset confirmado del grupo billing (22 en la partición 0, LAG 3) fueron los mismos antes y después de <code>docker compose restart kafka</code>. La API publicó Broker4 tras el reinicio y billing, al volver, facturó los 4 pedidos (ORD-C50C7B78, ORD-B5A0F0B9, ORD-11EF65D2, ORD-EF8487B9): LAG final 0. Observación: billing-consumer no terminó dentro de los 10 s de gracia de <code>docker compose stop</code> (salida 137), así que su sesión siguió registrada en el grupo hasta expirar; por eso la captura con LAG 3 muestra Members=1 aunque el contenedor estaba detenido.`,
       imgs: [['kafka/img/20-cp12-terminal-reinicio-broker.png', 'Terminal: offsets del tópico y del grupo billing antes y después del reinicio del broker, y recuperación de billing'], ['kafka/img/21-cp12-billing-lag3-tras-reinicio.png', 'Kafka UI después del reinicio del broker: billing-service-group conserva su offset (22) con LAG 3 en la partición 0'], ['kafka/img/22-cp12-billing-lag0-recuperado.png', 'Kafka UI: billing-service-group con LAG 0 después de procesar los 4 eventos']],
-      logs: [['kafka/CP-12-capturas.txt', 'Re-ejecución CP-12 (B)']],
+      logs: [['kafka/CP-12-capturas.txt', 'Re-ejecución CP-12 (B)', /Factura generada/]],
     },
   },
 ];
@@ -397,9 +434,11 @@ const html = `<!doctype html>
   .arch { font-size: 8.5pt; color: #fff; padding: 2px 8px; border-radius: 10px; vertical-align: middle; margin-left: 6px; }
   .arch.rabbitmq { background: var(--rabbit); } .arch.kafka { background: var(--kafka); }
   .estado { font-weight: 700; } .estado.ok { color: var(--ok); } .estado.ko { color: #b00020; }
-  .case { break-before: page; }
+  .case { margin-top: 28px; padding-top: 6px; border-top: 3px solid var(--line); }
+  .fmt { break-inside: auto; }
   figure { margin: 10px 0; break-inside: avoid; }
-  figure img { width: 100%; border: 1px solid var(--line); }
+  figure img { display: block; max-width: 100%; max-height: 100mm; margin: 0 auto; border: 1px solid var(--line); }
+  figcaption { text-align: center; }
   figcaption { font-size: 9pt; color: var(--muted); margin-top: 3px; }
   .src { font-family: Consolas, monospace; font-size: 8pt; color: #8a94a3; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
